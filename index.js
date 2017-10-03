@@ -1,6 +1,9 @@
 'use strict';
 
-import {NativeModules} from 'react-native';
+import {
+  DeviceEventEmitter,
+  NativeModules
+} from 'react-native';
 
 const {MobileDeviceManager} = NativeModules;
 
@@ -27,9 +30,17 @@ const MDMManager = {
     });
   },
 
-  // addListener () {
-  //   return;
-  // }
+  addListener (callback) {
+    return DeviceEventEmitter.addListener(
+      'userDefaultsDidChange', callback
+    );
+  },
+
+  removeListener (listener) {
+    DeviceEventEmitter.removeListener(
+      'userDefaultsDidChange', listener
+    );
+  }
 };
 
 export default MDMManager;
