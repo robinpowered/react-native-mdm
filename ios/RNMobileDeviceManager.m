@@ -28,11 +28,9 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTResponseSenderBlock)callback)
     id response = [[NSUserDefaults standardUserDefaults] objectForKey:kConfigurationKey];
     
     if (response) {
-        
         callback(@[[NSNull null], response]);
     }
     else {
-        
         callback(@[[NSNull null], [NSNull null]]);
     }
 }
