@@ -26,7 +26,7 @@ const MDMManager = {
           return reject('MDM is not supported');
         }
         resolve(result);
-      })
+      });
     });
   },
 
