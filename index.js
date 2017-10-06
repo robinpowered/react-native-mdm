@@ -34,12 +34,6 @@ const MDMManager = {
     return DeviceEventEmitter.addListener(
       'userDefaultsDidChange', callback
     );
-  },
-
-  removeListener (listener) {
-    DeviceEventEmitter.removeListener(
-      'userDefaultsDidChange', listener
-    );
   }
 };
 
