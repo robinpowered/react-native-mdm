@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.bridge.WritableNativeMap;
 
 public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
 
@@ -35,10 +36,15 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
         restrictionReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                appRestrictions = restrictionsManager.getApplicationRestrictions();
+                WritableNativeMap data = new WritableNativeMap();
+                for (String key : appRestrictions.keySet()){
+                    data.putString(key, appRestrictions.getString(key));
+                }
                 if (thisContext.hasActiveCatalystInstance()) {
                     thisContext
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit("userDefaultsDidChange", restrictionsManager.getApplicationRestrictions());
+                        .emit("userDefaultsDidChange", data);
                 }
             }
         };
@@ -56,12 +62,6 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
         return isSupported;
     }
 
-    private Bundle getConfigs() {
-        // Instantiating the restriction manager
-        appRestrictions = restrictionsManager.getApplicationRestrictions();
-        return appRestrictions;
-    }
-
     @ReactMethod
     public void isSupported(Callback successCallback) {
         if (isMDMSupported()) {
@@ -74,7 +74,13 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getConfiguration(Callback successCallback) {
         if (isMDMSupported()) {
-            successCallback.invoke(null, getConfigs());
+            // Instantiating the restriction manager
+            appRestrictions = restrictionsManager.getApplicationRestrictions();
+            WritableNativeMap data = new WritableNativeMap();
+            for (String key : appRestrictions.keySet()){
+                data.putString(key, appRestrictions.getString(key));
+            }
+            successCallback.invoke(null, data);
         } else {
             successCallback.invoke(true, null);
         }
