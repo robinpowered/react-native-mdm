@@ -9,8 +9,8 @@
   "keywords": [
     "react-native"
   ],
-  "author": "",
-  "license": "",
+  "author": "Ying Hang Eng",
+  "license": "MIT",
   "peerDependencies": {
     "react-native": "^0.27"
   },
