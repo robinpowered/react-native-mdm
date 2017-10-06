@@ -37,7 +37,6 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
         restrictionReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.e("MyTagGoesHere2", "This is my log message at the error level here");
                 appRestrictions = restrictionsManager.getApplicationRestrictions();
                 WritableNativeMap data = new WritableNativeMap();
                 for (String key : appRestrictions.keySet()){
