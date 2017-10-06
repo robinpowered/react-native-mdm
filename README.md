@@ -21,7 +21,12 @@ MDMManager
 
 ```javascript
 componentDidMount() {
-  this.MDMListener = MDMManager.addListener(this.printUserDefaults);
+  this.MDMListener = MDMManager.addListener(this.MDMDidUpdate);
+}
+
+MDMDidUpdate(data) {
+  console.log('AppConfig data was changed');
+  console.log(data);
 }
 
 componentWillUnmount() {
