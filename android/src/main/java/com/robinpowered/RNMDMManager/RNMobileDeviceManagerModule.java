@@ -14,6 +14,7 @@ import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.WritableNativeMap;
+import android.util.Log;
 
 public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
 
@@ -36,6 +37,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
         restrictionReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                Log.e("MyTagGoesHere2", "This is my log message at the error level here");
                 appRestrictions = restrictionsManager.getApplicationRestrictions();
                 WritableNativeMap data = new WritableNativeMap();
                 for (String key : appRestrictions.keySet()){
@@ -48,6 +50,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
                 }
             }
         };
+        thisContext.registerReceiver(restrictionReceiver,restrictionFilter);
     }
 
     @Override
