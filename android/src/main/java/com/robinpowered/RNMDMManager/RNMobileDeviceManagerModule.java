@@ -14,7 +14,6 @@ import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.WritableNativeMap;
-import android.util.Log;
 
 public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
 
