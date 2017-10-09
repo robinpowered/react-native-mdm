@@ -11,10 +11,7 @@
   ],
   "author": "Ying Hang Eng",
   "license": "MIT",
-  "peerDependencies": {
+  "devDependencies": {
     "react-native": "^0.27"
-  },
-  "dependencies": {
-    "react-native": "^0.48.4"
   }
 }
