@@ -49,24 +49,30 @@
 
 - (void)userDefaultsDidChange:(NSNotification *)notification
 {
+    id appConfig = [MobileDeviceManager getAppConfig];
+
+    [_bridge.eventDispatcher sendDeviceEventWithName:@"react-native-mdm/managedAppConfigDidChange"
+                                                body:appConfig];
+}
+
++ (id)getAppConfig {
     static NSString * const kConfigurationKey = @"com.apple.configuration.managed";
 
-    id response = [[NSUserDefaults standardUserDefaults] objectForKey:kConfigurationKey];
-
-    [_bridge.eventDispatcher sendDeviceEventWithName:@"userDefaultsDidChange"
-                                                body:@{@"response": response}];
+    return [[NSUserDefaults standardUserDefaults] objectForKey:kConfigurationKey];
 }
 
 RCT_EXPORT_MODULE();
 
+- (NSDictionary *)constantsToExport
+{
+  return @{ @"managedAppConfigDidChange": @"react-native-mdm/managedAppConfigDidChange" };
+}
+
 RCT_EXPORT_METHOD(isSupported:(RCTResponseSenderBlock)callback)
 {
+    id appConfig = [MobileDeviceManager getAppConfig];
 
-    static NSString * const kConfigurationKey = @"com.apple.configuration.managed";
-
-    id response = [[NSUserDefaults standardUserDefaults] objectForKey:kConfigurationKey];
-
-    if (response) {
+    if (appConfig) {
         callback(@[[NSNull null], @true]);
     } else {
         callback(@[RCTMakeError(@"Managed App Config is not supported", nil, nil)]);
@@ -76,13 +82,10 @@ RCT_EXPORT_METHOD(isSupported:(RCTResponseSenderBlock)callback)
 
 RCT_EXPORT_METHOD(getConfiguration:(RCTResponseSenderBlock)callback)
 {
+    id appConfig = [MobileDeviceManager getAppConfig];
 
-    static NSString * const kConfigurationKey = @"com.apple.configuration.managed";
-
-    id response = [[NSUserDefaults standardUserDefaults] objectForKey:kConfigurationKey];
-
-    if (response) {
-        callback(@[[NSNull null], response]);
+    if (appConfig) {
+        callback(@[[NSNull null], appConfig]);
     }
     else {
         callback(@[RCTMakeError(@"Managed App Config is not supported", nil, nil)]);
