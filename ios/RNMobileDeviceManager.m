@@ -35,7 +35,7 @@
     if ((self = [super init])) {
         // Add Notification Center observer to be alerted of any change to NSUserDefaults.
         // Managed app configuration changes pushed down from an MDM server appear in NSUSerDefaults.
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(userDefaultsDidChange:) name:@"NSUserDefaultsDidChangeNotification" object:self];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(userDefaultsDidChange:) name:@"NSUserDefaultsDidChangeNotification" object:nil];
     }
 
     return self;
