@@ -68,27 +68,28 @@ RCT_EXPORT_MODULE();
   return @{ @"managedAppConfigDidChange": @"react-native-mdm/managedAppConfigDidChange" };
 }
 
-RCT_EXPORT_METHOD(isSupported:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     id appConfig = [MobileDeviceManager getAppConfig];
 
     if (appConfig) {
-        callback(@[[NSNull null], @true]);
+        resolve(@YES);
     } else {
-        callback(@[RCTMakeError(@"Managed App Config is not supported", nil, nil)]);
+        reject(@"Managed App Config is not supported", @"Managed App Config is not supported", nil);
         return;
     }
 }
 
-RCT_EXPORT_METHOD(getConfiguration:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     id appConfig = [MobileDeviceManager getAppConfig];
 
     if (appConfig) {
-        callback(@[[NSNull null], appConfig]);
-    }
-    else {
-        callback(@[RCTMakeError(@"Managed App Config is not supported", nil, nil)]);
+        resolve(appConfig);
+    } else {
+        reject(@"Managed App Config is not supported", @"Managed App Config is not supported", nil);
         return;
     }
 }

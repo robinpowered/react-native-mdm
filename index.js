@@ -7,34 +7,10 @@ import {
 
 const {MobileDeviceManager} = NativeModules;
 
-const MDMManager = {
-  isSupported () {
-    return new Promise((resolve, reject) => {
-      MobileDeviceManager.isSupported(error => {
-        if (error) {
-          return reject(false);
-        }
-        resolve(true);
-      });
-    });
-  },
+MobileDeviceManager.addListener = (callback) => {
+  return DeviceEventEmitter.addListener(
+    MobileDeviceManager.managedAppConfigDidChange, callback
+  );
+}
 
-  getConfiguration () {
-    return new Promise((resolve, reject) => {
-      MobileDeviceManager.getConfiguration((error, result) => {
-        if (error) {
-          return reject('MDM is not supported');
-        }
-        resolve(result);
-      });
-    });
-  },
-
-  addListener (callback) {
-    return DeviceEventEmitter.addListener(
-      MobileDeviceManager.managedAppConfigDidChange, callback
-    );
-  }
-};
-
-export default MDMManager;
+export default MobileDeviceManager;
