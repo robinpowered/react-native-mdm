@@ -69,7 +69,7 @@ RCT_EXPORT_METHOD(isSupported:(RCTResponseSenderBlock)callback)
     if (response) {
         callback(@[[NSNull null], @true]);
     } else {
-        callback(@[RCTMakeError(@"Managed App Config is not supported", nil)]);
+        callback(@[RCTMakeError(@"Managed App Config is not supported", nil, nil)]);
         return;
     }
 }
@@ -85,7 +85,7 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTResponseSenderBlock)callback)
         callback(@[[NSNull null], response]);
     }
     else {
-        callback(@[RCTMakeError(@"Managed App Config is not supported", nil)]);
+        callback(@[RCTMakeError(@"Managed App Config is not supported", nil, nil)]);
         return;
     }
 }
