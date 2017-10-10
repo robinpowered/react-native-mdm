@@ -14,6 +14,9 @@ import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.WritableNativeMap;
+import java.util.Map;
+import java.util.HashMap;
+import javax.annotation.Nullable;
 
 public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     // RM - For MDM
@@ -40,7 +43,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
                 if (thisContext.hasActiveCatalystInstance()) {
                     thisContext
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit("userDefaultsDidChange", data);
+                        .emit("react-native-mdm/managedAppConfigDidChange", data);
                 }
             }
         };
@@ -50,6 +53,13 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     @Override
     public String getName() {
         return "MobileDeviceManager";
+    }
+
+    @Override
+    public @Nullable Map<String, Object> getConstants() {
+        HashMap<String, Object> constants = new HashMap<String, Object>();
+        constants.put("managedAppConfigDidChange", "react-native-mdm/managedAppConfigDidChange");
+        return constants;
     }
 
     private boolean isMDMSupported() {
