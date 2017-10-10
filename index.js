@@ -32,7 +32,7 @@ const MDMManager = {
 
   addListener (callback) {
     return DeviceEventEmitter.addListener(
-      'userDefaultsDidChange', callback
+      MobileDeviceManager.managedAppConfigDidChange, callback
     );
   }
 };
