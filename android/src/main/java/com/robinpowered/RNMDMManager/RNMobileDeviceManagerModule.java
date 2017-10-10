@@ -3,7 +3,7 @@ package com.robinpowered.RNMDMManager;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
 
 // For MDM
 import android.content.RestrictionsManager;
@@ -70,16 +70,12 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void isSupported(Callback successCallback) {
-        if (isMDMSupported()) {
-            successCallback.invoke(null, true);
-        } else {
-            successCallback.invoke(true, null);
-        }
+    public void isSupported(final Promise promise) {
+        promise.resolve(isMDMSupported());
     }
 
     @ReactMethod
-    public void getConfiguration(Callback successCallback) {
+    public void getConfiguration(final Promise promise) {
         if (isMDMSupported()) {
             // Instantiating the restriction manager
             appRestrictions = restrictionsManager.getApplicationRestrictions();
@@ -87,9 +83,9 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
             for (String key : appRestrictions.keySet()){
                 data.putString(key, appRestrictions.getString(key));
             }
-            successCallback.invoke(null, data);
+            promise.resolve(data);
         } else {
-            successCallback.invoke(true, null);
+          promise.reject(new Error("Managed App Config is not supported"));
         }
     }
 }
