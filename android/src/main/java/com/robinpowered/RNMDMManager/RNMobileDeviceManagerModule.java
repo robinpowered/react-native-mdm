@@ -16,18 +16,14 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.WritableNativeMap;
 
 public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
-
-    private final ReactApplicationContext reactContext;
-
     // RM - For MDM
-    RestrictionsManager restrictionsManager;
-    Bundle appRestrictions;
-    IntentFilter restrictionFilter;
-    BroadcastReceiver restrictionReceiver;
+    private RestrictionsManager restrictionsManager;
+    private Bundle appRestrictions;
+    private IntentFilter restrictionFilter;
+    private BroadcastReceiver restrictionReceiver;
 
     public RNMobileDeviceManagerModule(ReactApplicationContext reactContext) {
         super(reactContext);
-        this.reactContext = reactContext;
         final ReactApplicationContext thisContext = reactContext;
 
         restrictionsManager = (RestrictionsManager) reactContext.getSystemService(Context.RESTRICTIONS_SERVICE);
