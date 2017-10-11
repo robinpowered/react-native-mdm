@@ -30,6 +30,9 @@
 
 @synthesize bridge = _bridge;
 
+static NSString * const appConfigurationKey = @"com.apple.configuration.managed";
+static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfigDidChange";
+
 - (instancetype)init
 {
     if ((self = [super init])) {
@@ -51,21 +54,19 @@
 {
     id appConfig = [MobileDeviceManager getAppConfig];
 
-    [_bridge.eventDispatcher sendDeviceEventWithName:@"react-native-mdm/managedAppConfigDidChange"
+    [_bridge.eventDispatcher sendDeviceEventWithName:APP_CONFIG_CHANGED
                                                 body:appConfig];
 }
 
-+ (id)getAppConfig {
-    static NSString * const kConfigurationKey = @"com.apple.configuration.managed";
-
-    return [[NSUserDefaults standardUserDefaults] objectForKey:kConfigurationKey];
++ (NSDictionary *)getAppConfig {
+    return [[NSUserDefaults standardUserDefaults] dictionaryForKey:appConfigurationKey];
 }
 
 RCT_EXPORT_MODULE();
 
 - (NSDictionary *)constantsToExport
 {
-  return @{ @"managedAppConfigDidChange": @"react-native-mdm/managedAppConfigDidChange" };
+  return @{ @"APP_CONFIG_CHANGED": APP_CONFIG_CHANGED };
 }
 
 RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
@@ -76,8 +77,7 @@ RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
     if (appConfig) {
         resolve(@YES);
     } else {
-        reject(@"Managed App Config is not supported", @"Managed App Config is not supported", nil);
-        return;
+        resolve(@NO);
     }
 }
 
@@ -89,8 +89,7 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
     if (appConfig) {
         resolve(appConfig);
     } else {
-        reject(@"Managed App Config is not supported", @"Managed App Config is not supported", nil);
-        return;
+        reject(@"not-support", @"Managed App Config is not supported", @[RCTMakeError(@"Managed App Config is not supported", nil, nil)]);
     }
 }
 

@@ -7,10 +7,11 @@ import {
 
 const {MobileDeviceManager} = NativeModules;
 
-MobileDeviceManager.addListener = (callback) => {
-  return DeviceEventEmitter.addListener(
-    MobileDeviceManager.managedAppConfigDidChange, callback
-  );
-}
-
-export default MobileDeviceManager;
+export default {
+  ...MobileDeviceManager,
+  addListener (callback) {
+    return DeviceEventEmitter.addListener(
+      MobileDeviceManager.APP_CONFIG_CHANGED, callback
+    );
+  }
+};
