@@ -2,18 +2,18 @@
 # react-native-mdm
 
 ```javascript
-import MDMManager from 'react-native-mdm';
+import MobileDeviceManager from 'react-native-mdm';
 ```
 
 ```javascript
-MDMManager
+MobileDeviceManager
   .isSupported()
   .then(supported => console.log(supported))
   .catch(error => console.log(error));
 ```
 
 ```javascript
-MDMManager
+MobileDeviceManager
   .getConfiguration()
   .then(result => console.log(result))
   .catch(error => console.log(error));
@@ -21,7 +21,7 @@ MDMManager
 
 ```javascript
 componentDidMount() {
-  this.MDMListener = MDMManager.addListener(this.MDMDidUpdate);
+  this.MDMListener = MobileDeviceManager.addListener(this.MDMDidUpdate);
 }
 
 MDMDidUpdate(data) {
