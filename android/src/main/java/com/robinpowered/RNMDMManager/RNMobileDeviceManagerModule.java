@@ -22,13 +22,11 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     public static final String MODULE_NAME = "MobileDeviceManager";
     public static final String APP_CONFIG_CHANGED = "react-native-mdm/managedAppConfigDidChange";
 
-    private RestrictionsManager restrictionsManager;
-
     public RNMobileDeviceManagerModule(ReactApplicationContext reactContext) {
         super(reactContext);
         final ReactApplicationContext thisContext = reactContext;
 
-        restrictionsManager = (RestrictionsManager) reactContext.getSystemService(Context.RESTRICTIONS_SERVICE);
+        final RestrictionsManager restrictionsManager = (RestrictionsManager) reactContext.getSystemService(Context.RESTRICTIONS_SERVICE);
 
         IntentFilter restrictionFilter = new IntentFilter(Intent.ACTION_APPLICATION_RESTRICTIONS_CHANGED);
         BroadcastReceiver restrictionReceiver = new BroadcastReceiver() {
@@ -62,6 +60,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     }
 
     private boolean isMDMSupported() {
+        RestrictionsManager restrictionsManager = (RestrictionsManager) super.getReactApplicationContext().getSystemService(Context.RESTRICTIONS_SERVICE);
         return restrictionsManager.getApplicationRestrictions().size() > 0;
     }
 
@@ -73,6 +72,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getConfiguration(final Promise promise) {
         if (isMDMSupported()) {
+            RestrictionsManager restrictionsManager = (RestrictionsManager) super.getReactApplicationContext().getSystemService(Context.RESTRICTIONS_SERVICE);
             Bundle appRestrictions = restrictionsManager.getApplicationRestrictions();
             WritableNativeMap data = new WritableNativeMap();
             for (String key : appRestrictions.keySet()){
