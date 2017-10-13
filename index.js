@@ -11,7 +11,8 @@ export default {
   ...MobileDeviceManager,
   addListener (callback) {
     return DeviceEventEmitter.addListener(
-      MobileDeviceManager.APP_CONFIG_CHANGED, callback
+      MobileDeviceManager.APP_CONFIG_CHANGED,
+      callback
     );
   }
 };
