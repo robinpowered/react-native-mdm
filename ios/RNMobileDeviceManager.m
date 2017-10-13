@@ -1,14 +1,5 @@
 #import "RNMobileDeviceManager.h"
 
-// For RCTMakeError
-#if __has_include(<React/RCTUtils.h>)
-#import <React/RCTUtils.h>
-#elif __has_include("RCTUtils.h")
-#import "RCTUtils.h"
-#else
-#import "React/RCTUtils.h"
-#endif
-
 // Used to send events to JS
 #if __has_include(<React/RCTBridge.h>)
 #import <React/RCTBridge.h>
@@ -89,7 +80,7 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
     if (appConfig) {
         resolve(appConfig);
     } else {
-        reject(@"not-support", @"Managed App Config is not supported", @[RCTMakeError(@"Managed App Config is not supported", nil, nil)]);
+        reject(@"not-support", @"Managed App Config is not supported", nil);
     }
 }
 
