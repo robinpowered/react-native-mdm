@@ -84,5 +84,55 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
     }
 }
 
+
+RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+
+    UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
+        if (didSucceed) {
+          UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {});
+          resolve(@YES);
+        }
+        else {
+          resolve(@NO);
+        }
+    });
+}
+
+RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    resolve(UIAccessibilityIsGuidedAccessEnabled())
+}
+
+RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+
+    UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
+        if (didSucceed) {
+          resolve(@YES);
+        }
+        else {
+          resolve(@NO);
+        }
+    });
+}
+
+RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+
+    UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
+        if (didSucceed) {
+          resolve(@YES);
+        }
+        else {
+          resolve(@NO);
+        }
+    });
+}
+
 @end
 

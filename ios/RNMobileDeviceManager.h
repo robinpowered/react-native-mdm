@@ -6,6 +6,8 @@
 #import "React/RCTBridgeModule.h"
 #endif
 
+#import <UIKit/UIKit.h>
+
 @interface MobileDeviceManager : NSObject <RCTBridgeModule>
 
 @end
