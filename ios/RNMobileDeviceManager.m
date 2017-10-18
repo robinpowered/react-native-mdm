@@ -91,8 +91,11 @@ RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)re
 
     UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
         if (didSucceed) {
-          UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {});
-          resolve(@YES);
+          UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
+            if (didSucceed) {
+              resolve(@YES);
+            }
+          });
         }
         else {
           resolve(@NO);
