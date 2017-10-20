@@ -26,25 +26,14 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
 
 - (instancetype)init
 {
-    if ((self = [super init])) {
-        // Add Notification Center observer to be alerted of any change to NSUserDefaults.
-        // Managed app configuration changes pushed down from an MDM server appear in NSUSerDefaults.
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(userDefaultsDidChange:) name:@"NSUserDefaultsDidChangeNotification" object:nil];
-    }
+    [ManagedAppConfigSettings clientInstance].delegate = self;
+    [[ManagedAppConfigSettings clientInstance] start];
 
     return self;
-
 }
 
-- (void)dealloc
-{
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-- (void)userDefaultsDidChange:(NSNotification *)notification
-{
+- (void) settingsDidChange:(NSDictionary<NSString *, id> *) changes {
     id appConfig = [MobileDeviceManager getAppConfig];
-
     [_bridge.eventDispatcher sendDeviceEventWithName:APP_CONFIG_CHANGED
                                                 body:appConfig];
 }
@@ -57,7 +46,7 @@ RCT_EXPORT_MODULE();
 
 - (NSDictionary *)constantsToExport
 {
-  return @{ @"APP_CONFIG_CHANGED": APP_CONFIG_CHANGED };
+    return @{ @"APP_CONFIG_CHANGED": APP_CONFIG_CHANGED };
 }
 
 RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
@@ -85,4 +74,3 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
 }
 
 @end
-

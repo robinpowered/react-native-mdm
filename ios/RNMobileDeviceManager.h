@@ -5,8 +5,7 @@
 #else
 #import "React/RCTBridgeModule.h"
 #endif
+@import AppConfigSettingsFramework;
 
-@interface MobileDeviceManager : NSObject <RCTBridgeModule>
-
+@interface MobileDeviceManager : NSObject <RCTBridgeModule, ManagedAppConfigSettingsDelegate>
 @end
-
