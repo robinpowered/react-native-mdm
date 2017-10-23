@@ -6,8 +6,10 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Promise;
 
 // For MDM
+import android.app.Activity;
 import android.content.RestrictionsManager;
 import android.app.ActivityManager;
+import android.app.admin.DevicePolicyManager;
 import android.os.Bundle;
 import android.content.Context;
 import android.content.Intent;
@@ -40,51 +42,60 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
                 }
                 if (thisContext.hasActiveCatalystInstance()) {
                     thisContext
-                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit(APP_CONFIG_CHANGED, data);
+                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit(APP_CONFIG_CHANGED, data);
                 }
             }
         };
         thisContext.registerReceiver(restrictionReceiver,restrictionFilter);
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void enableLockState() {
-      if (!isLockState()) {
-        startLockTask();
-      }
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void disableLockState() {
-      if (isLockState()){
-        try {
-          stopLockTask();
-        } catch (SecurityException e) {
-
+    public boolean enableLockState() {
+        if (!isLockState()) {
+            Activity activity = getCurrentActivity();
+            if (activity == null) {
+                return false;
+            }
+            activity.startLockTask();
+            return true;
         }
-      }
+
+        return false;
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void isLockStatePermitted() {
-      DevicePolicyManager dpm = (DevicePolicyManager)
-      getReactApplicationContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
-      return dpm.isLockTaskPermitted(this.getPackageName());
+    public boolean disableLockState() {
+        if (isLockState()) {
+            try {
+                Activity activity = getCurrentActivity();
+                if (activity == null) {
+                    return false;
+                }
+                activity.stopLockTask();
+                return true;
+            } catch (SecurityException e) {
+                return false;
+            }
+        }
+        return false;
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
+    public boolean isLockStatePermitted() {
+        DevicePolicyManager dpm = (DevicePolicyManager)
+                getReactApplicationContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+        return dpm.isLockTaskPermitted(getReactApplicationContext().getPackageName());
+    }
+
     public boolean isLockState() {
-      boolean isLocked = false;
-      ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-      try {
-        if (am.getLockTaskModeState() !== ActivityManager.LOCK_TASK_MODE_NONE) {
-          isLocked = true;
-        }
-      } catch (Exception e) {
+        boolean isLocked = false;
+        ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+        try {
+            if (am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE) {
+                isLocked = true;
+            }
+        } catch (Exception e) {
 
-      }
-      return isLocked;
+        }
+        return isLocked;
     }
 
     @Override
@@ -120,27 +131,27 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
             }
             promise.resolve(data);
         } else {
-          promise.reject(new Error("Managed App Config is not supported"));
+            promise.reject(new Error("Managed App Config is not supported"));
         }
     }
 
     @ReactMethod
     public void isAutonomousSingleAppModeSupported(final Promise promise) {
-      promise.resolve(isLockStatePermitted());
+        promise.resolve(isLockStatePermitted());
     }
 
     @ReactMethod
     public void isAutonomousSingleAppModeEnabled(final Promise promise) {
-      promise.resolve(isLockState());
+        promise.resolve(isLockState());
     }
 
     @ReactMethod
     public void enableAutonomousSingleAppMode(final Promise promise) {
-      promise.resolve(enableLockState());
+        promise.resolve(enableLockState());
     }
 
     @ReactMethod
     public void disableAutonomousSingleAppMode(final Promise promise) {
-      promise.resolve(disableLockState());
+        promise.resolve(disableLockState());
     }
 }
