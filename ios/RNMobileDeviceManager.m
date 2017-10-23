@@ -21,7 +21,6 @@
 
 @synthesize bridge = _bridge;
 
-static NSString * const appConfigurationKey = @"com.apple.configuration.managed";
 static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfigDidChange";
 
 - (instancetype)init
@@ -32,14 +31,15 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
     return self;
 }
 
-- (void) settingsDidChange:(NSDictionary<NSString *, id> *) changes {
-    id appConfig = [MobileDeviceManager getAppConfig];
-    [_bridge.eventDispatcher sendDeviceEventWithName:APP_CONFIG_CHANGED
-                                                body:appConfig];
+- (void)dealloc
+{
+    [[ManagedAppConfigSettings clientInstance] end];
 }
 
-+ (NSDictionary *)getAppConfig {
-    return [[NSUserDefaults standardUserDefaults] dictionaryForKey:appConfigurationKey];
+- (void) settingsDidChange:(NSDictionary<NSString *, id> *) changes {
+    id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
+    [_bridge.eventDispatcher sendDeviceEventWithName:APP_CONFIG_CHANGED
+                                                body:appConfig];
 }
 
 RCT_EXPORT_MODULE();
@@ -52,7 +52,7 @@ RCT_EXPORT_MODULE();
 RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    id appConfig = [MobileDeviceManager getAppConfig];
+    id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
 
     if (appConfig) {
         resolve(@YES);
@@ -64,7 +64,7 @@ RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    id appConfig = [MobileDeviceManager getAppConfig];
+    id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
 
     if (appConfig) {
         resolve(appConfig);

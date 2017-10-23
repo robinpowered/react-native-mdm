@@ -9,20 +9,20 @@ import UIKit
 }
 
 open class ManagedAppConfigSettings: NSObject {
-    
+
     private static var __once: () = {
             manager = ManagedAppConfigSettings()
         }()
-    
+
     fileprivate static var token:Int = 0
     fileprivate static var manager:ManagedAppConfigSettings?
     open var delegate:ManagedAppConfigSettingsDelegate?
-    
+
     // MARK: Public Methods
-    
+
     /**
      Return a singleton instance of ManagedAppConfigSettings
-     
+
      - returns: ManagedAppConfigSettings instance
      */
     open static func clientInstance() -> ManagedAppConfigSettings
@@ -30,7 +30,7 @@ open class ManagedAppConfigSettings: NSObject {
         _ = ManagedAppConfigSettings.__once
         return manager!
     }
-    
+
     /**
      Start the ManagedAppConfigSettings, including adding observers
      It is recommended to set the delegate before calling start()
@@ -50,10 +50,15 @@ open class ManagedAppConfigSettings: NSObject {
         }
         self.checkAppConfigChanges()
     }
-    
+
+    open func end()
+    {
+        NotificationCenter.default.removeObserver(self, name: UserDefaults.didChangeNotification, object: nil);
+    }
+
     /**
      Retrieve the dictionary of keys stored by the MDM server
-     
+
      - returns: dictionary of key/value pairs
      */
     open func appConfig ()  -> [String : Any]? {
@@ -63,12 +68,12 @@ open class ManagedAppConfigSettings: NSObject {
         }
         return nil
     }
-    
+
     // MARK: Private Methods
-    
+
     /**
      retrieve the stored, cached set of keys
-     
+
      - returns: dictionary of key/value pairs
      */
     fileprivate func persistedAppConfig () -> [String : Any]?
@@ -79,13 +84,13 @@ open class ManagedAppConfigSettings: NSObject {
         }
         return nil
     }
-    
+
     /**
      Compares the AppCofig stored values for equality
-     
+
      - parameter a: AnyObject value 1
      - parameter b: AnyObject value 2
-     
+
      - returns: true if equivalent, false otherwise
      */
     fileprivate func isEqual(_ a: Any, b: Any) -> Bool
@@ -108,17 +113,17 @@ open class ManagedAppConfigSettings: NSObject {
         }
         return false
     }
-    
+
     /**
      Find any keys that changed as a result of the server pushing down
      New keys.  Persist the new keys, and return those keys that changed
-     
+
      - returns: dictionary of key/value pairs that changed or were added
      */
     fileprivate func checkAppConfigChanges() -> [String : Any]
     {
         var result:[String:Any] = [:]
-        
+
         // copy the keys into the result
         if let newConfig = appConfig()
         {
@@ -127,7 +132,7 @@ open class ManagedAppConfigSettings: NSObject {
                 result[k] = v
             }
         }
-        
+
         // reove any values that were already in the set
         if let persistedConfig = persistedAppConfig()
         {
@@ -142,7 +147,7 @@ open class ManagedAppConfigSettings: NSObject {
                 }
             }
         }
-        
+
         if let newConfig = appConfig()
         {
             if ( result.count > 0 )
@@ -157,10 +162,10 @@ open class ManagedAppConfigSettings: NSObject {
         }
         return result
     }
-    
+
     /**
      Write the passed Dictionary to the persisted key
-     
+
      - parameter toPersist: Dictionary to persist
      */
     fileprivate func persistConfig(_ toPersist:[String : Any]?)
