@@ -42,18 +42,32 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
                                                 body:appConfig];
 }
 
-+ (BOOL) isASAMSupported {
-    __block BOOL asam = NO;
-    UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
-        if (didSucceed) {
-            UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSuceed) {
-                if (didSucceed)  {
-                    asam = YES;
-                }
-            });
-        }
-    });
-    return asam;
++ (void) isASAMSupported:(void(^)(BOOL))callback {
+    if (UIAccessibilityIsGuidedAccessEnabled()) {
+        UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
+            if (didSucceed) {
+                UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSuceed) {
+                    if (didSucceed)  {
+                        callback(YES);
+                    }
+                });
+            } else {
+                callback(NO);
+            }
+        });
+    } else {
+        UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
+            if (didSucceed) {
+                UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSuceed) {
+                    if (didSucceed)  {
+                        callback(YES);
+                    }
+                });
+            } else {
+                callback(NO);
+            }
+        });
+    }
 }
 
 RCT_EXPORT_MODULE();
@@ -91,13 +105,13 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    BOOL asam = [MobileDeviceManager isASAMSupported];
-
-    if (asam) {
-        resolve(@YES);
-    } else {
-        resolve(@NO);
-    }
+    [MobileDeviceManager isASAMSupported:^(BOOL reply){
+        if (reply) {
+            resolve(@YES);
+        } else {
+            resolve(@NO);
+        }
+    }];
 
 }
 
@@ -114,13 +128,13 @@ RCT_EXPORT_METHOD(isSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    BOOL asam = [MobileDeviceManager isASAMSupported];
-
-    if (asam && UIAccessibilityIsGuidedAccessEnabled()) {
-        resolve(@YES);
-    } else {
-        resolve(@NO);
-    }
+    [MobileDeviceManager isASAMSupported:^(BOOL reply){
+        if (reply && UIAccessibilityIsGuidedAccessEnabled()) {
+            resolve(@YES);
+        } else {
+            resolve(@NO);
+        }
+    }];
 }
 
 RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
