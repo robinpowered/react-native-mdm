@@ -9,6 +9,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface MobileDeviceManager : NSObject <RCTBridgeModule>
+@interface MobileDeviceManager : NSObject <RCTBridgeModule, ManagedAppConfigSettingsDelegate>
 
 @end
