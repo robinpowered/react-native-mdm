@@ -42,6 +42,20 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
                                                 body:appConfig];
 }
 
++ (BOOL) isASAMSupported {
+    __block BOOL asam = NO;
+    UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
+        if (didSucceed) {
+            UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSuceed) {
+                if (didSucceed)  {
+                    asam = YES;
+                }
+            });
+        }
+    });
+    return asam;
+}
+
 RCT_EXPORT_MODULE();
 
 - (NSDictionary *)constantsToExport
@@ -77,25 +91,32 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
+    BOOL asam = [MobileDeviceManager isASAMSupported];
 
-    UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
-        if (didSucceed) {
-          UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
-            if (didSucceed) {
-              resolve(@YES);
-            }
-          });
-        }
-        else {
-          resolve(@NO);
-        }
-    });
+    if (asam) {
+        resolve(@YES);
+    } else {
+        resolve(@NO);
+    }
+
+}
+
+RCT_EXPORT_METHOD(isSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    if (UIAccessibilityIsGuidedAccessEnabled()) {
+        resolve(@YES);
+    } else {
+        resolve(@NO);
+    }
 }
 
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    if (UIAccessibilityIsGuidedAccessEnabled()) {
+    BOOL asam = [MobileDeviceManager isASAMSupported];
+
+    if (asam && UIAccessibilityIsGuidedAccessEnabled()) {
         resolve(@YES);
     } else {
         resolve(@NO);

@@ -147,8 +147,28 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void isAutonomousSingleAppModeEnabled(final Promise promise) {
+    public void isSingleAppModeEnabled(final Promise promise) {
         promise.resolve(isLockState());
+    }
+
+    @ReactMethod
+    public void isAutonomousSingleAppModeEnabled(final Promise promise) {
+        boolean lockedStatus = false;
+        ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (am.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_LOCKED) {
+                    lockedStatus = true;
+                }
+            } else {
+                if (am.isInLockTaskMode() && isLockStatePermitted()) {
+                    lockedStatus = true;
+                }
+            }
+        } catch (e) {
+
+        }
+        promise.resolve(lockedStatus);
     }
 
     @ReactMethod
