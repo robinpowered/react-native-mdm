@@ -11,6 +11,7 @@ import android.content.RestrictionsManager;
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
 import android.os.Bundle;
+import android.os.Build;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -59,7 +60,6 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
             activity.startLockTask();
             return true;
         }
-
         return false;
     }
 
@@ -89,10 +89,16 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
         boolean isLocked = false;
         ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
         try {
-            if (am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE) {
-                isLocked = true;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE) {
+                    isLocked = true;
+                }
+            } else {
+                if (am.isInLockTaskMode()) {
+                    isLocked = true;
+                }
             }
-        } catch (Exception e) {
+        } catch (e) {
 
         }
         return isLocked;
