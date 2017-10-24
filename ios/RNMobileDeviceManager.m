@@ -106,7 +106,11 @@ RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)re
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    resolve(UIAccessibilityIsGuidedAccessEnabled())
+    if (UIAccessibilityIsGuidedAccessEnabled()) {
+        resolve(@YES);
+    } else {
+        resolve(@NO);
+    }
 }
 
 RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
