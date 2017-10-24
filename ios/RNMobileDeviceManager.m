@@ -21,49 +21,38 @@
 
 @synthesize bridge = _bridge;
 
-static NSString * const appConfigurationKey = @"com.apple.configuration.managed";
 static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfigDidChange";
 
 - (instancetype)init
 {
-    if ((self = [super init])) {
-        // Add Notification Center observer to be alerted of any change to NSUserDefaults.
-        // Managed app configuration changes pushed down from an MDM server appear in NSUSerDefaults.
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(userDefaultsDidChange:) name:@"NSUserDefaultsDidChangeNotification" object:nil];
-    }
+    [ManagedAppConfigSettings clientInstance].delegate = self;
+    [[ManagedAppConfigSettings clientInstance] start];
 
     return self;
-
 }
 
 - (void)dealloc
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[ManagedAppConfigSettings clientInstance] end];
 }
 
-- (void)userDefaultsDidChange:(NSNotification *)notification
-{
-    id appConfig = [MobileDeviceManager getAppConfig];
-
+- (void) settingsDidChange:(NSDictionary<NSString *, id> *) changes {
+    id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
     [_bridge.eventDispatcher sendDeviceEventWithName:APP_CONFIG_CHANGED
                                                 body:appConfig];
-}
-
-+ (NSDictionary *)getAppConfig {
-    return [[NSUserDefaults standardUserDefaults] dictionaryForKey:appConfigurationKey];
 }
 
 RCT_EXPORT_MODULE();
 
 - (NSDictionary *)constantsToExport
 {
-  return @{ @"APP_CONFIG_CHANGED": APP_CONFIG_CHANGED };
+    return @{ @"APP_CONFIG_CHANGED": APP_CONFIG_CHANGED };
 }
 
 RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    id appConfig = [MobileDeviceManager getAppConfig];
+    id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
 
     if (appConfig) {
         resolve(@YES);
@@ -75,7 +64,7 @@ RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    id appConfig = [MobileDeviceManager getAppConfig];
+    id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
 
     if (appConfig) {
         resolve(appConfig);
@@ -138,4 +127,3 @@ RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolv
 }
 
 @end
-

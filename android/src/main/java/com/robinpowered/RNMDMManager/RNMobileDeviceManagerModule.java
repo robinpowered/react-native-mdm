@@ -117,7 +117,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     }
 
     private boolean isMDMSupported() {
-        RestrictionsManager restrictionsManager = (RestrictionsManager) super.getReactApplicationContext().getSystemService(Context.RESTRICTIONS_SERVICE);
+        RestrictionsManager restrictionsManager = (RestrictionsManager) getReactApplicationContext().getSystemService(Context.RESTRICTIONS_SERVICE);
         return restrictionsManager.getApplicationRestrictions().size() > 0;
     }
 
@@ -129,7 +129,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getConfiguration(final Promise promise) {
         if (isMDMSupported()) {
-            RestrictionsManager restrictionsManager = (RestrictionsManager) super.getReactApplicationContext().getSystemService(Context.RESTRICTIONS_SERVICE);
+            RestrictionsManager restrictionsManager = (RestrictionsManager) getReactApplicationContext().getSystemService(Context.RESTRICTIONS_SERVICE);
             Bundle appRestrictions = restrictionsManager.getApplicationRestrictions();
             WritableNativeMap data = new WritableNativeMap();
             for (String key : appRestrictions.keySet()){
