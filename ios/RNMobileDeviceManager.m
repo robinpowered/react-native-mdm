@@ -106,11 +106,7 @@ RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)re
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     [MobileDeviceManager isASAMSupported:^(BOOL reply){
-        if (reply) {
-            resolve(@YES);
-        } else {
-            resolve(@NO);
-        }
+        resolve(@(reply));
     }];
 
 }
@@ -118,22 +114,14 @@ RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)re
 RCT_EXPORT_METHOD(isSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    if (UIAccessibilityIsGuidedAccessEnabled()) {
-        resolve(@YES);
-    } else {
-        resolve(@NO);
-    }
+    resolve(@(UIAccessibilityIsGuidedAccessEnabled()));
 }
 
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     [MobileDeviceManager isASAMSupported:^(BOOL reply){
-        if (reply && UIAccessibilityIsGuidedAccessEnabled()) {
-            resolve(@YES);
-        } else {
-            resolve(@NO);
-        }
+        resolve(@(reply && UIAccessibilityIsGuidedAccessEnabled()));
     }];
 }
 
@@ -142,12 +130,7 @@ RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
 {
 
     UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
-        if (didSucceed) {
-          resolve(@YES);
-        }
-        else {
-          resolve(@NO);
-        }
+        resolve(@(didSucceed));
     });
 }
 
@@ -156,12 +139,7 @@ RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolv
 {
 
     UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
-        if (didSucceed) {
-          resolve(@YES);
-        }
-        else {
-          resolve(@NO);
-        }
+        resolve(@(didSucceed));
     });
 }
 
