@@ -121,7 +121,7 @@ RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)reso
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     [MobileDeviceManager isASAMSupported:^(BOOL isSupported){
-        resolve(@(isSupported && UIAccessibilityIsGuidedAccessEnabled()));
+        resolve(@((BOOL)(isSupported && UIAccessibilityIsGuidedAccessEnabled())));
     }];
 }
 
@@ -144,3 +144,4 @@ RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolv
 }
 
 @end
+
