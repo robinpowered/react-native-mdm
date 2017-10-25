@@ -88,18 +88,10 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     public boolean isLockState() {
         boolean isLocked = false;
         ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE) {
-                    isLocked = true;
-                }
-            } else {
-                if (am.isInLockTaskMode()) {
-                    isLocked = true;
-                }
-            }
-        } catch (e) {
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            isLocked = am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE;
+        } else {
+            isLocked = am.isInLockTaskMode();
         }
         return isLocked;
     }
@@ -157,27 +149,31 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
         ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (am.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_LOCKED) {
-                    lockedStatus = true;
-                }
+                lockedStatus = am.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_LOCKED;
             } else {
-                if (am.isInLockTaskMode() && isLockStatePermitted()) {
-                    lockedStatus = true;
-                }
+                lockedStatus = isLockStatePermitted() && am.isInLockTaskMode();
             }
         } catch (e) {
-
+            promise.reject(e);
         }
         promise.resolve(lockedStatus);
     }
 
     @ReactMethod
     public void enableAutonomousSingleAppMode(final Promise promise) {
-        promise.resolve(enableLockState());
+        try {
+            promise.resolve(enableLockState());
+        } catch (e) {
+            promise.reject(e);
+        }
     }
 
     @ReactMethod
     public void disableAutonomousSingleAppMode(final Promise promise) {
-        promise.resolve(disableLockState());
+        try {
+            promise.resolve(disableLockState());
+        } catch (e) {
+            promise.reject(e);
+        }
     }
 }
