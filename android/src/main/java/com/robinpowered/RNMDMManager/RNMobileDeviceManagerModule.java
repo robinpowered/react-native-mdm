@@ -82,14 +82,23 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     }
 
     public boolean isLockState() {
-        boolean isLocked = false;
         ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            isLocked = am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE;
+            return am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE;
         } else {
-            isLocked = am.isInLockTaskMode();
+            return am.isInLockTaskMode();
         }
-        return isLocked;
+    }
+
+    public boolean isASAM() {
+        ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return am.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_LOCKED;
+        } else {
+            return isLockStatePermitted() && am.isInLockTaskMode();
+        }
     }
 
     @Override
@@ -145,18 +154,11 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void isAutonomousSingleAppModeEnabled(final Promise promise) {
-        boolean lockedStatus = false;
-        ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                lockedStatus = am.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_LOCKED;
-            } else {
-                lockedStatus = isLockStatePermitted() && am.isInLockTaskMode();
-            }
+          promise.resolve(isASAM());
         } catch (Exception e) {
-            promise.reject(e);
+          promise.reject(e);
         }
-        promise.resolve(lockedStatus);
     }
 
     @ReactMethod
