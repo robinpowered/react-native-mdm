@@ -105,8 +105,8 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [MobileDeviceManager isASAMSupported:^(BOOL reply){
-        resolve(@(reply));
+    [MobileDeviceManager isASAMSupported:^(BOOL isSupported){
+        resolve(@(isSupported));
     }];
 
 }
@@ -120,8 +120,8 @@ RCT_EXPORT_METHOD(isSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [MobileDeviceManager isASAMSupported:^(BOOL reply){
-        resolve(@(reply && UIAccessibilityIsGuidedAccessEnabled()));
+    [MobileDeviceManager isASAMSupported:^(BOOL isSupported){
+        resolve(@(isSupported && UIAccessibilityIsGuidedAccessEnabled()));
     }];
 }
 
