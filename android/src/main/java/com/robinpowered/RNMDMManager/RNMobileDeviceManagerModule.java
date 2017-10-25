@@ -136,7 +136,11 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void isSingleAppModeEnabled(final Promise promise) {
-        promise.resolve(isLockState());
+        try {
+          promise.resolve(isLockState());
+        } catch (Exception e) {
+          promise.reject(e);
+        }
     }
 
     @ReactMethod
@@ -149,7 +153,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
             } else {
                 lockedStatus = isLockStatePermitted() && am.isInLockTaskMode();
             }
-        } catch (e) {
+        } catch (Exception e) {
             promise.reject(e);
         }
         promise.resolve(lockedStatus);
@@ -159,7 +163,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     public void enableAutonomousSingleAppMode(final Promise promise) {
         try {
             promise.resolve(enableLockState());
-        } catch (e) {
+        } catch (Exception e) {
             promise.reject(e);
         }
     }
@@ -168,7 +172,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     public void disableAutonomousSingleAppMode(final Promise promise) {
         try {
             promise.resolve(disableLockState());
-        } catch (e) {
+        } catch (Exception e) {
             promise.reject(e);
         }
     }
