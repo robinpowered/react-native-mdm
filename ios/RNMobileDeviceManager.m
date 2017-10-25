@@ -44,27 +44,23 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
 
 + (void) isASAMSupported:(void(^)(BOOL))callback {
     if (UIAccessibilityIsGuidedAccessEnabled()) {
-        UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
-            if (didSucceed) {
-                UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSuceed) {
-                    if (didSucceed)  {
-                        callback(YES);
-                    }
+        UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
+            if (didDisable) {
+                UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
+                    callback(didEnable);
                 });
             } else {
-                callback(NO);
+                callback(didDisable);
             }
         });
     } else {
-        UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
-            if (didSucceed) {
-                UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSuceed) {
-                    if (didSucceed)  {
-                        callback(YES);
-                    }
+        UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
+            if (didEnable) {
+                UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
+                    callback(didDisable);
                 });
             } else {
-                callback(NO);
+                callback(didEnable);
             }
         });
     }
