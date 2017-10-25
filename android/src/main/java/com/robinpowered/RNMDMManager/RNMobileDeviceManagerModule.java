@@ -65,16 +65,12 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
 
     public boolean disableLockState() {
         if (isLockState()) {
-            try {
-                Activity activity = getCurrentActivity();
-                if (activity == null) {
-                    return false;
-                }
-                activity.stopLockTask();
-                return true;
-            } catch (SecurityException e) {
+            Activity activity = getCurrentActivity();
+            if (activity == null) {
                 return false;
             }
+            activity.stopLockTask();
+            return true;
         }
         return false;
     }
