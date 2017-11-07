@@ -140,4 +140,3 @@ RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolv
 }
 
 @end
-
