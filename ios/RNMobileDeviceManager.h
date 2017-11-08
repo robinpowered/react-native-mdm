@@ -7,5 +7,8 @@
 #endif
 @import AppConfigSettingsFramework;
 
+#import <UIKit/UIKit.h>
+
 @interface MobileDeviceManager : NSObject <RCTBridgeModule, ManagedAppConfigSettingsDelegate>
+
 @end

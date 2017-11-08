@@ -42,6 +42,30 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
                                                 body:appConfig];
 }
 
++ (void) isASAMSupported:(void(^)(BOOL))callback {
+    if (UIAccessibilityIsGuidedAccessEnabled()) {
+        UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
+            if (didDisable) {
+                UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
+                    callback(didEnable);
+                });
+            } else {
+                callback(didDisable);
+            }
+        });
+    } else {
+        UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
+            if (didEnable) {
+                UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
+                    callback(didDisable);
+                });
+            } else {
+                callback(didEnable);
+            }
+        });
+    }
+}
+
 RCT_EXPORT_MODULE();
 
 - (NSDictionary *)constantsToExport
@@ -71,6 +95,48 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
     } else {
         reject(@"not-support", @"Managed App Config is not supported", nil);
     }
+}
+
+
+RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [MobileDeviceManager isASAMSupported:^(BOOL isSupported){
+        resolve(@(isSupported));
+    }];
+
+}
+
+RCT_EXPORT_METHOD(isSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    resolve(@(UIAccessibilityIsGuidedAccessEnabled()));
+}
+
+RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [MobileDeviceManager isASAMSupported:^(BOOL isSupported){
+        resolve(@((BOOL)(isSupported && UIAccessibilityIsGuidedAccessEnabled())));
+    }];
+}
+
+RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+
+    UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
+        resolve(@(didSucceed));
+    });
+}
+
+RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+
+    UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
+        resolve(@(didSucceed));
+    });
 }
 
 @end

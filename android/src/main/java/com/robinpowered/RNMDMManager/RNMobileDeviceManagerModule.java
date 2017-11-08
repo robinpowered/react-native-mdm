@@ -6,8 +6,12 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Promise;
 
 // For MDM
+import android.app.Activity;
 import android.content.RestrictionsManager;
+import android.app.ActivityManager;
+import android.app.admin.DevicePolicyManager;
 import android.os.Bundle;
+import android.os.Build;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -39,12 +43,62 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
                 }
                 if (thisContext.hasActiveCatalystInstance()) {
                     thisContext
-                        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                        .emit(APP_CONFIG_CHANGED, data);
+                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit(APP_CONFIG_CHANGED, data);
                 }
             }
         };
         thisContext.registerReceiver(restrictionReceiver,restrictionFilter);
+    }
+
+    public boolean enableLockState() {
+        if (!isLockState()) {
+            Activity activity = getCurrentActivity();
+            if (activity == null) {
+                return false;
+            }
+            activity.startLockTask();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean disableLockState() {
+        if (isLockState()) {
+            Activity activity = getCurrentActivity();
+            if (activity == null) {
+                return false;
+            }
+            activity.stopLockTask();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isLockStatePermitted() {
+        DevicePolicyManager dpm = (DevicePolicyManager)
+                getReactApplicationContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+        return dpm.isLockTaskPermitted(getReactApplicationContext().getPackageName());
+    }
+
+    public boolean isLockState() {
+        ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE;
+        } else {
+            return am.isInLockTaskMode();
+        }
+    }
+
+    public boolean isASAM() {
+        ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return am.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_LOCKED;
+        } else {
+            return isLockStatePermitted() && am.isInLockTaskMode();
+        }
     }
 
     @Override
@@ -80,7 +134,48 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
             }
             promise.resolve(data);
         } else {
-          promise.reject(new Error("Managed App Config is not supported"));
+            promise.reject(new Error("Managed App Config is not supported"));
+        }
+    }
+
+    @ReactMethod
+    public void isAutonomousSingleAppModeSupported(final Promise promise) {
+        promise.resolve(isLockStatePermitted());
+    }
+
+    @ReactMethod
+    public void isSingleAppModeEnabled(final Promise promise) {
+        try {
+          promise.resolve(isLockState());
+        } catch (Exception e) {
+          promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void isAutonomousSingleAppModeEnabled(final Promise promise) {
+        try {
+          promise.resolve(isASAM());
+        } catch (Exception e) {
+          promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void enableAutonomousSingleAppMode(final Promise promise) {
+        try {
+            promise.resolve(enableLockState());
+        } catch (Exception e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void disableAutonomousSingleAppMode(final Promise promise) {
+        try {
+            promise.resolve(disableLockState());
+        } catch (Exception e) {
+            promise.reject(e);
         }
     }
 }
