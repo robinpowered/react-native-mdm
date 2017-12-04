@@ -10,5 +10,6 @@
 #import <UIKit/UIKit.h>
 
 @interface MobileDeviceManager : NSObject <RCTBridgeModule, ManagedAppConfigSettingsDelegate>
+@property dispatch_semaphore_t asamSem;
 
 @end

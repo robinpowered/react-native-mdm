@@ -27,7 +27,9 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
 {
     [ManagedAppConfigSettings clientInstance].delegate = self;
     [[ManagedAppConfigSettings clientInstance] start];
-
+    if ( self = [super init] ) {
+        self.asamSem = dispatch_semaphore_create(1);
+    }
     return self;
 }
 
@@ -42,24 +44,30 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
                                                 body:appConfig];
 }
 
-+ (void) isASAMSupported:(void(^)(BOOL))callback {
+- (void) isASAMSupported:(void(^)(BOOL))callback {
     if (UIAccessibilityIsGuidedAccessEnabled()) {
+        dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
         UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
             if (didDisable) {
                 UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
+                    dispatch_semaphore_signal(self.asamSem);
                     callback(didEnable);
                 });
             } else {
+                dispatch_semaphore_signal(self.asamSem);
                 callback(didDisable);
             }
         });
     } else {
+        dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
         UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
             if (didEnable) {
                 UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
+                    dispatch_semaphore_signal(self.asamSem);
                     callback(didDisable);
                 });
             } else {
+                dispatch_semaphore_signal(self.asamSem);
                 callback(didEnable);
             }
         });
@@ -101,7 +109,7 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [MobileDeviceManager isASAMSupported:^(BOOL isSupported){
+    [self isASAMSupported:^(BOOL isSupported){
         resolve(@(isSupported));
     }];
 
@@ -116,7 +124,7 @@ RCT_EXPORT_METHOD(isSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [MobileDeviceManager isASAMSupported:^(BOOL isSupported){
+    [self isASAMSupported:^(BOOL isSupported){
         resolve(@((BOOL)(isSupported && UIAccessibilityIsGuidedAccessEnabled())));
     }];
 }
