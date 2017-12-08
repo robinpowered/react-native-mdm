@@ -125,16 +125,21 @@ RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)re
 RCT_EXPORT_METHOD(isSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
+    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
     dispatch_async(dispatch_get_main_queue(), ^{
         resolve(@(UIAccessibilityIsGuidedAccessEnabled()));
+        dispatch_semaphore_signal(self.asamSem);
     });
 }
 
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
+
     [self isASAMSupported:^(BOOL isSupported){
-        resolve(@((BOOL)(isSupported && UIAccessibilityIsGuidedAccessEnabled())));
+        dispatch_async(dispatch_get_main_queue(), ^{
+            resolve(@((BOOL)(isSupported && UIAccessibilityIsGuidedAccessEnabled())));
+        });
     }];
 }
 
@@ -144,8 +149,8 @@ RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
     dispatch_async(dispatch_get_main_queue(), ^{
         UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
-            dispatch_semaphore_signal(self.asamSem);
             resolve(@(didSucceed));
+            dispatch_semaphore_signal(self.asamSem);
         });
     });
 }
@@ -156,10 +161,11 @@ RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolv
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
     dispatch_async(dispatch_get_main_queue(), ^{
         UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
-            dispatch_semaphore_signal(self.asamSem);
             resolve(@(didSucceed));
+            dispatch_semaphore_signal(self.asamSem);
         });
     });
 }
 
 @end
+
