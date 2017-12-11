@@ -17,6 +17,10 @@
 #import "React/RCTEventDispatcher.h"
 #endif
 
+@interface MobileDeviceManager ()
+@property dispatch_semaphore_t asamSem;
+@end
+
 @implementation MobileDeviceManager
 
 @synthesize bridge = _bridge;
@@ -27,7 +31,7 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
 {
     [ManagedAppConfigSettings clientInstance].delegate = self;
     [[ManagedAppConfigSettings clientInstance] start];
-    if ( self = [super init] ) {
+    if (self = [super init]) {
         self.asamSem = dispatch_semaphore_create(1);
     }
     return self;
@@ -149,8 +153,8 @@ RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
     dispatch_async(dispatch_get_main_queue(), ^{
         UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
-            resolve(@(didSucceed));
             dispatch_semaphore_signal(self.asamSem);
+            resolve(@(didSucceed));
         });
     });
 }
@@ -161,8 +165,8 @@ RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolv
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
     dispatch_async(dispatch_get_main_queue(), ^{
         UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
-            resolve(@(didSucceed));
             dispatch_semaphore_signal(self.asamSem);
+            resolve(@(didSucceed));
         });
     });
 }
