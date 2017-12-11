@@ -17,6 +17,10 @@
 #import "React/RCTEventDispatcher.h"
 #endif
 
+@interface MobileDeviceManager ()
+@property dispatch_semaphore_t asamSem;
+@end
+
 @implementation MobileDeviceManager
 
 @synthesize bridge = _bridge;
@@ -27,7 +31,9 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
 {
     [ManagedAppConfigSettings clientInstance].delegate = self;
     [[ManagedAppConfigSettings clientInstance] start];
-
+    if (self = [super init]) {
+        self.asamSem = dispatch_semaphore_create(1);
+    }
     return self;
 }
 
@@ -42,28 +48,36 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
                                                 body:appConfig];
 }
 
-+ (void) isASAMSupported:(void(^)(BOOL))callback {
-    if (UIAccessibilityIsGuidedAccessEnabled()) {
-        UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
-            if (didDisable) {
-                UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
-                    callback(didEnable);
-                });
-            } else {
-                callback(didDisable);
-            }
-        });
-    } else {
-        UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
-            if (didEnable) {
-                UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
+- (void) isASAMSupported:(void(^)(BOOL))callback {
+    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (UIAccessibilityIsGuidedAccessEnabled()) {
+            UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
+                if (didDisable) {
+                    UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
+                        dispatch_semaphore_signal(self.asamSem);
+                        callback(didEnable);
+                    });
+                } else {
+                    dispatch_semaphore_signal(self.asamSem);
                     callback(didDisable);
-                });
-            } else {
-                callback(didEnable);
-            }
-        });
-    }
+                }
+            });
+        } else {
+            UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
+                if (didEnable) {
+                    UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
+                        dispatch_semaphore_signal(self.asamSem);
+                        callback(didDisable);
+                    });
+                } else {
+                    dispatch_semaphore_signal(self.asamSem);
+                    callback(didEnable);
+                }
+            });
+        }
+    });
 }
 
 RCT_EXPORT_MODULE();
@@ -71,6 +85,11 @@ RCT_EXPORT_MODULE();
 - (NSDictionary *)constantsToExport
 {
     return @{ @"APP_CONFIG_CHANGED": APP_CONFIG_CHANGED };
+}
+
+- (dispatch_queue_t)methodQueue
+{
+    return dispatch_queue_create("com.robinpowered.RNMobileDeviceManager", DISPATCH_QUEUE_SERIAL);
 }
 
 RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
@@ -101,7 +120,7 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [MobileDeviceManager isASAMSupported:^(BOOL isSupported){
+    [self isASAMSupported:^(BOOL isSupported){
         resolve(@(isSupported));
     }];
 
@@ -110,33 +129,47 @@ RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)re
 RCT_EXPORT_METHOD(isSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    resolve(@(UIAccessibilityIsGuidedAccessEnabled()));
+    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        resolve(@(UIAccessibilityIsGuidedAccessEnabled()));
+        dispatch_semaphore_signal(self.asamSem);
+    });
 }
 
 RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [MobileDeviceManager isASAMSupported:^(BOOL isSupported){
-        resolve(@((BOOL)(isSupported && UIAccessibilityIsGuidedAccessEnabled())));
+
+    [self isASAMSupported:^(BOOL isSupported){
+        dispatch_async(dispatch_get_main_queue(), ^{
+            resolve(@((BOOL)(isSupported && UIAccessibilityIsGuidedAccessEnabled())));
+        });
     }];
 }
 
 RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-
-    UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
-        resolve(@(didSucceed));
+    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
+            dispatch_semaphore_signal(self.asamSem);
+            resolve(@(didSucceed));
+        });
     });
 }
 
 RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-
-    UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
-        resolve(@(didSucceed));
+    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
+            dispatch_semaphore_signal(self.asamSem);
+            resolve(@(didSucceed));
+        });
     });
 }
 
 @end
+
