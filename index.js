@@ -15,7 +15,7 @@ export default {
       callback
     );
   },
-  addScreenLockListener (callback) {
+  addAppLockListener (callback) {
     return DeviceEventEmitter.addListener(
       MobileDeviceManager.APP_LOCK_STATUS_CHANGED,
       callback
