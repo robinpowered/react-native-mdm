@@ -206,7 +206,12 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     @ReactMethod
     public void lockApp(final Promise promise) {
         try {
-            promise.resolve(enableLockState());
+            boolean locked = enableLockState();
+            if (locked) {
+              promise.resolve(locked);
+            } else {
+              promise.reject(new Error("Unable to lock app"));
+            }
         } catch (Exception e) {
             promise.reject(e);
         }
@@ -215,7 +220,12 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     @ReactMethod
     public void unlockApp(final Promise promise) {
         try {
-            promise.resolve(disableLockState());
+            boolean unlocked = disableLockState();
+            if (unlocked) {
+              promise.resolve(unlocked);
+            } else {
+              promise.reject(new Error("Unable to unlock app"));
+            }
         } catch (Exception e) {
             promise.reject(e);
         }

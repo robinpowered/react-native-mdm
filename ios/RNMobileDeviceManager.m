@@ -103,8 +103,9 @@ static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
 
     dispatch_async(dispatch_get_main_queue(), ^{
+        BOOL isEnabled = UIAccessibilityIsGuidedAccessEnabled();
         dispatch_semaphore_signal(self.asamSem);
-        callback(@(UIAccessibilityIsGuidedAccessEnabled()));
+        callback(isEnabled);
     });
 }
 
@@ -172,7 +173,11 @@ RCT_EXPORT_METHOD(lockApp: (RCTPromiseResolveBlock)resolve
     dispatch_async(dispatch_get_main_queue(), ^{
         UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
             dispatch_semaphore_signal(self.asamSem);
-            resolve(@(didSucceed));
+            if (didSucceed) {
+                resolve(@(didSucceed));
+            } else {
+                reject(@"failed", @"Unable to lock app", nil);
+            }
         });
     });
 }
@@ -184,7 +189,11 @@ RCT_EXPORT_METHOD(unlockApp: (RCTPromiseResolveBlock)resolve
     dispatch_async(dispatch_get_main_queue(), ^{
         UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
             dispatch_semaphore_signal(self.asamSem);
-            resolve(@(didSucceed));
+            if (didSucceed) {
+                resolve(@(didSucceed));
+            } else {
+                reject(@"failed", @"Unable to unlock app", nil);
+            }
         });
     });
 }
