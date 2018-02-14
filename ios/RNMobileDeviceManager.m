@@ -26,6 +26,8 @@
 @synthesize bridge = _bridge;
 
 static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfigDidChange";
+static NSString * const APP_LOCK_STATUS_CHANGED = @"react-native-mdm/appLockStatusDidChange";
+static NSString * const APP_LOCKED = @"react-native-mdm/appLocked";
 
 - (instancetype)init
 {
@@ -33,6 +35,7 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
     [[ManagedAppConfigSettings clientInstance] start];
     if (self = [super init]) {
         self.asamSem = dispatch_semaphore_create(1);
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(guidedAccessStatusChangeListenerCallback:) name:UIAccessibilityGuidedAccessStatusDidChangeNotification object:nil];
     }
     return self;
 }
@@ -46,6 +49,17 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
     id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
     [_bridge.eventDispatcher sendDeviceEventWithName:APP_CONFIG_CHANGED
                                                 body:appConfig];
+}
+
+- (void)guidedAccessStatusChangeListenerCallback:(NSNotification*)notification
+{
+    [self isSAMEnabled:^(BOOL isEnabled) {
+        [_bridge.eventDispatcher sendDeviceEventWithName:APP_LOCK_STATUS_CHANGED
+                                                    body:(@{
+                                                            APP_LOCKED: @(isEnabled)
+                                                            })];
+    }];
+    
 }
 
 - (void) isASAMSupported:(void(^)(BOOL))callback {
@@ -80,11 +94,22 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
     });
 }
 
+- (void) isSAMEnabled:(void(^)(BOOL))callback {
+    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_semaphore_signal(self.asamSem);
+        callback(@(UIAccessibilityIsGuidedAccessEnabled()));
+    });
+}
+
 RCT_EXPORT_MODULE();
 
 - (NSDictionary *)constantsToExport
 {
-    return @{ @"APP_CONFIG_CHANGED": APP_CONFIG_CHANGED };
+    return @{ @"APP_CONFIG_CHANGED": APP_CONFIG_CHANGED,
+              @"APP_LOCK_STATUS_CHANGED": APP_LOCK_STATUS_CHANGED,
+              @"APP_LOCKED": APP_LOCKED };
 }
 
 - (dispatch_queue_t)methodQueue
@@ -117,7 +142,7 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
 }
 
 
-RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(isAppLockAllowed: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     [self isASAMSupported:^(BOOL isSupported){
@@ -126,28 +151,15 @@ RCT_EXPORT_METHOD(isAutonomousSingleAppModeSupported: (RCTPromiseResolveBlock)re
 
 }
 
-RCT_EXPORT_METHOD(isSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(isAppLocked: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
-    dispatch_async(dispatch_get_main_queue(), ^{
-        resolve(@(UIAccessibilityIsGuidedAccessEnabled()));
-        dispatch_semaphore_signal(self.asamSem);
-    });
-}
-
-RCT_EXPORT_METHOD(isAutonomousSingleAppModeEnabled: (RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject)
-{
-
-    [self isASAMSupported:^(BOOL isSupported){
-        dispatch_async(dispatch_get_main_queue(), ^{
-            resolve(@((BOOL)(isSupported && UIAccessibilityIsGuidedAccessEnabled())));
-        });
+    [self isSAMEnabled:^(BOOL isEnabled) {
+        resolve(@(isEnabled));
     }];
 }
 
-RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(lockApp: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
@@ -159,7 +171,7 @@ RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
     });
 }
 
-RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(unlockApp: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
