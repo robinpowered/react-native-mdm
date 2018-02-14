@@ -164,7 +164,12 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void enableAutonomousSingleAppMode(final Promise promise) {
         try {
-            promise.resolve(enableLockState());
+            boolean locked = enableLockState();
+            if (locked) {
+              promise.resolve(locked);
+            } else {
+              promise.reject(new Error("Unable to enable ASAM"));
+            }
         } catch (Exception e) {
             promise.reject(e);
         }
@@ -173,7 +178,12 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void disableAutonomousSingleAppMode(final Promise promise) {
         try {
-            promise.resolve(disableLockState());
+            boolean unlocked = disableLockState();
+            if (unlocked) {
+              promise.resolve(unlocked);
+            } else {
+              promise.reject(new Error("Unable to disable ASAM"));
+            }
         } catch (Exception e) {
             promise.reject(e);
         }

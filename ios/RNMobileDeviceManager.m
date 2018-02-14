@@ -154,7 +154,11 @@ RCT_EXPORT_METHOD(enableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolve
     dispatch_async(dispatch_get_main_queue(), ^{
         UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didSucceed) {
             dispatch_semaphore_signal(self.asamSem);
-            resolve(@(didSucceed));
+            if (didSucceed) {
+                resolve(@(didSucceed));
+            } else {
+                reject(@"Action failed", @"Unable to enable ASAM", nil);
+            }
         });
     });
 }
@@ -166,7 +170,11 @@ RCT_EXPORT_METHOD(disableAutonomousSingleAppMode: (RCTPromiseResolveBlock)resolv
     dispatch_async(dispatch_get_main_queue(), ^{
         UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didSucceed) {
             dispatch_semaphore_signal(self.asamSem);
-            resolve(@(didSucceed));
+            if (didSucceed) {
+                resolve(@(didSucceed));
+            } else {
+                reject(@"Action failed", @"Unable to disable ASAM", nil);
+            }
         });
     });
 }
