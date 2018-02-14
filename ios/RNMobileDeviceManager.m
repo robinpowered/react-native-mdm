@@ -27,7 +27,8 @@
 
 static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfigDidChange";
 static NSString * const APP_LOCK_STATUS_CHANGED = @"react-native-mdm/appLockStatusDidChange";
-static NSString * const APP_LOCKED = @"react-native-mdm/appLocked";
+static NSString * const APP_LOCKED = @"appLocked";
+static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
 
 - (instancetype)init
 {
@@ -43,6 +44,7 @@ static NSString * const APP_LOCKED = @"react-native-mdm/appLocked";
 - (void)dealloc
 {
     [[ManagedAppConfigSettings clientInstance] end];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void) settingsDidChange:(NSDictionary<NSString *, id> *) changes {
@@ -54,12 +56,15 @@ static NSString * const APP_LOCKED = @"react-native-mdm/appLocked";
 - (void)guidedAccessStatusChangeListenerCallback:(NSNotification*)notification
 {
     [self isSAMEnabled:^(BOOL isEnabled) {
-        [_bridge.eventDispatcher sendDeviceEventWithName:APP_LOCK_STATUS_CHANGED
-                                                    body:(@{
-                                                            APP_LOCKED: @(isEnabled)
-                                                            })];
+        [self isASAMSupported:^(BOOL isAllowed) {
+            [_bridge.eventDispatcher sendDeviceEventWithName:APP_LOCK_STATUS_CHANGED
+                                                        body:(@{
+                                                                APP_LOCKED: @(isEnabled),
+                                                                APP_LOCKING_ALLOWED: @(isAllowed)
+                                                                })];
+        }]
     }];
-    
+
 }
 
 - (void) isASAMSupported:(void(^)(BOOL))callback {
@@ -96,7 +101,7 @@ static NSString * const APP_LOCKED = @"react-native-mdm/appLocked";
 
 - (void) isSAMEnabled:(void(^)(BOOL))callback {
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         dispatch_semaphore_signal(self.asamSem);
         callback(@(UIAccessibilityIsGuidedAccessEnabled()));
@@ -109,7 +114,8 @@ RCT_EXPORT_MODULE();
 {
     return @{ @"APP_CONFIG_CHANGED": APP_CONFIG_CHANGED,
               @"APP_LOCK_STATUS_CHANGED": APP_LOCK_STATUS_CHANGED,
-              @"APP_LOCKED": APP_LOCKED };
+              @"APP_LOCKED": APP_LOCKED,
+              @"APP_LOCKING_ALLOWED": APP_LOCKING_ALLOWED };
 }
 
 - (dispatch_queue_t)methodQueue
@@ -142,7 +148,7 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
 }
 
 
-RCT_EXPORT_METHOD(isAppLockAllowed: (RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(isAppLockingAllowed: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     [self isASAMSupported:^(BOOL isSupported){
