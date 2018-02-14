@@ -62,7 +62,7 @@ static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
                                                                 APP_LOCKED: @(isEnabled),
                                                                 APP_LOCKING_ALLOWED: @(isAllowed)
                                                                 })];
-        }]
+        }];
     }];
 
 }
