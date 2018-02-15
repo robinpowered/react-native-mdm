@@ -19,6 +19,8 @@
 
 @interface MobileDeviceManager ()
 @property dispatch_semaphore_t asamSem;
+@property dispatch_queue_t queue;
+@property dispatch_queue_t eventQueue;
 @property BOOL guidedAccessCallbackRequired;
 @property BOOL invalidated;
 @end
@@ -31,23 +33,26 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
 static NSString * const APP_LOCK_STATUS_CHANGED = @"react-native-mdm/appLockStatusDidChange";
 static NSString * const APP_LOCKED = @"appLocked";
 static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
-static char * const QUEUE_NAME = "com.robinpowered.RNMobileDeviceManager";
+static char * const OPERATION_QUEUE_NAME = "com.robinpowered.RNMobileDeviceManager.OperationQueue";
+static char * const NOTIFICATION_QUEUE_NAME = "com.robinpowered.RNMobileDeivceManager.NotificationQueue";
 
 - (instancetype)init
 {
-    [ManagedAppConfigSettings clientInstance].delegate = self;
-    [[ManagedAppConfigSettings clientInstance] start];
     if (self = [super init]) {
+        [ManagedAppConfigSettings clientInstance].delegate = self;
+        [[ManagedAppConfigSettings clientInstance] start];
+
         self.asamSem = dispatch_semaphore_create(1);
         self.guidedAccessCallbackRequired = YES;
         self.invalidated = NO;
+        self.queue = dispatch_queue_create(OPERATION_QUEUE_NAME, DISPATCH_QUEUE_SERIAL);
+        self.eventQueue = dispatch_queue_create(NOTIFICATION_QUEUE_NAME, DISPATCH_QUEUE_SERIAL);
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(guidedAccessStatusChangeListenerCallback:) name:UIAccessibilityGuidedAccessStatusDidChangeNotification object:nil];
     }
     return self;
 }
 
 - (void)invalidate {
-    NSLog(@"Invalidated");
     self.invalidated = YES;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -71,22 +76,18 @@ static char * const QUEUE_NAME = "com.robinpowered.RNMobileDeviceManager";
         return;
     }
 
-    dispatch_async(dispatch_queue_create(QUEUE_NAME, DISPATCH_QUEUE_SERIAL), ^{
-        if (self.guidedAccessCallbackRequired != NO) {
+    dispatch_async(_eventQueue, ^{
+        if (_guidedAccessCallbackRequired != NO) {
+            dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
             [self isSAMEnabled:^(BOOL isEnabled) {
-                dispatch_async(dispatch_queue_create(QUEUE_NAME, DISPATCH_QUEUE_SERIAL), ^{
-                    [self isASAMSupported:^(BOOL isAllowed) {
-                        if (self.invalidated) {
-                            return;
-                        }
-
-                        [_bridge.eventDispatcher sendDeviceEventWithName:APP_LOCK_STATUS_CHANGED
-                                                                    body:(@{
-                                                                            APP_LOCKED: @(isEnabled),
-                                                                            APP_LOCKING_ALLOWED: @(isAllowed)
-                                                                            })];
-                    }];
-                });
+                [self isASAMSupported:^(BOOL isAllowed) {
+                    dispatch_semaphore_signal(self.asamSem);
+                    [_bridge.eventDispatcher sendDeviceEventWithName:APP_LOCK_STATUS_CHANGED
+                                                                body:(@{
+                                                                        APP_LOCKED: @(isEnabled),
+                                                                        APP_LOCKING_ALLOWED: @(isAllowed)
+                                                                        })];
+                }];
             }];
         }
     });
@@ -94,36 +95,32 @@ static char * const QUEUE_NAME = "com.robinpowered.RNMobileDeviceManager";
 
 - (void) isASAMSupported:(void(^)(BOOL))callback
 {
-    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
+    _guidedAccessCallbackRequired = NO;
+
+    void (^onComplete)(BOOL success) = ^(BOOL success){
+        _guidedAccessCallbackRequired = YES;
+        callback(success);
+    };
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        self.guidedAccessCallbackRequired = NO;
         if (UIAccessibilityIsGuidedAccessEnabled()) {
             UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
                 if (didDisable) {
                     UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
-                        dispatch_semaphore_signal(self.asamSem);
-                        self.guidedAccessCallbackRequired = YES;
-                        callback(didEnable);
+                        onComplete(didEnable);
                     });
                 } else {
-                    dispatch_semaphore_signal(self.asamSem);
-                    self.guidedAccessCallbackRequired = YES;
-                    callback(didDisable);
+                    onComplete(didDisable);
                 }
             });
         } else {
             UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
                 if (didEnable) {
                     UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
-                        dispatch_semaphore_signal(self.asamSem);
-                        self.guidedAccessCallbackRequired = YES;
-                        callback(didDisable);
+                        onComplete(didDisable);
                     });
                 } else {
-                    dispatch_semaphore_signal(self.asamSem);
-                    self.guidedAccessCallbackRequired = YES;
-                    callback(didEnable);
+                    onComplete(didEnable);
                 }
             });
         }
@@ -132,10 +129,8 @@ static char * const QUEUE_NAME = "com.robinpowered.RNMobileDeviceManager";
 
 - (void) isSAMEnabled:(void(^)(BOOL))callback
 {
-    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
     dispatch_async(dispatch_get_main_queue(), ^{
         BOOL isEnabled = UIAccessibilityIsGuidedAccessEnabled();
-        dispatch_semaphore_signal(self.asamSem);
         callback(isEnabled);
     });
 }
@@ -152,7 +147,7 @@ RCT_EXPORT_MODULE();
 
 - (dispatch_queue_t)methodQueue
 {
-    return dispatch_queue_create(QUEUE_NAME, DISPATCH_QUEUE_SERIAL);
+    return dispatch_queue_create(OPERATION_QUEUE_NAME, DISPATCH_QUEUE_SERIAL);
 }
 
 RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
@@ -183,7 +178,9 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAppLockingAllowed: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
+    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
     [self isASAMSupported:^(BOOL isSupported){
+        dispatch_semaphore_signal(self.asamSem);
         resolve(@(isSupported));
     }];
 
@@ -192,7 +189,9 @@ RCT_EXPORT_METHOD(isAppLockingAllowed: (RCTPromiseResolveBlock)resolve
 RCT_EXPORT_METHOD(isAppLocked: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
+    dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
     [self isSAMEnabled:^(BOOL isEnabled) {
+        dispatch_semaphore_signal(self.asamSem);
         resolve(@(isEnabled));
     }];
 }
