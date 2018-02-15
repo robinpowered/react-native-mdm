@@ -20,6 +20,7 @@
 @interface MobileDeviceManager ()
 @property dispatch_semaphore_t asamSem;
 @property BOOL guidedAccessCallbackRequired;
+@property BOOL invalidated;
 @end
 
 @implementation MobileDeviceManager
@@ -39,9 +40,16 @@ static char * const QUEUE_NAME = "com.robinpowered.RNMobileDeviceManager";
     if (self = [super init]) {
         self.asamSem = dispatch_semaphore_create(1);
         self.guidedAccessCallbackRequired = YES;
+        self.invalidated = NO;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(guidedAccessStatusChangeListenerCallback:) name:UIAccessibilityGuidedAccessStatusDidChangeNotification object:nil];
     }
     return self;
+}
+
+- (void)invalidate {
+    NSLog(@"Invalidated");
+    self.invalidated = YES;
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)dealloc
@@ -59,11 +67,19 @@ static char * const QUEUE_NAME = "com.robinpowered.RNMobileDeviceManager";
 
 - (void)guidedAccessStatusChangeListenerCallback:(NSNotification*)notification
 {
+    if (self.invalidated) {
+        return;
+    }
+
     dispatch_async(dispatch_queue_create(QUEUE_NAME, DISPATCH_QUEUE_SERIAL), ^{
         if (self.guidedAccessCallbackRequired != NO) {
             [self isSAMEnabled:^(BOOL isEnabled) {
                 dispatch_async(dispatch_queue_create(QUEUE_NAME, DISPATCH_QUEUE_SERIAL), ^{
                     [self isASAMSupported:^(BOOL isAllowed) {
+                        if (self.invalidated) {
+                            return;
+                        }
+
                         [_bridge.eventDispatcher sendDeviceEventWithName:APP_LOCK_STATUS_CHANGED
                                                                     body:(@{
                                                                             APP_LOCKED: @(isEnabled),
@@ -79,7 +95,7 @@ static char * const QUEUE_NAME = "com.robinpowered.RNMobileDeviceManager";
 - (void) isASAMSupported:(void(^)(BOOL))callback
 {
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         self.guidedAccessCallbackRequired = NO;
         if (UIAccessibilityIsGuidedAccessEnabled()) {
@@ -143,7 +159,7 @@ RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
-    
+
     if (appConfig) {
         resolve(@YES);
     } else {
@@ -155,7 +171,7 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
-    
+
     if (appConfig) {
         resolve(appConfig);
     } else {
@@ -170,7 +186,7 @@ RCT_EXPORT_METHOD(isAppLockingAllowed: (RCTPromiseResolveBlock)resolve
     [self isASAMSupported:^(BOOL isSupported){
         resolve(@(isSupported));
     }];
-    
+
 }
 
 RCT_EXPORT_METHOD(isAppLocked: (RCTPromiseResolveBlock)resolve
@@ -214,4 +230,3 @@ RCT_EXPORT_METHOD(unlockApp: (RCTPromiseResolveBlock)resolve
 }
 
 @end
-
