@@ -19,6 +19,7 @@
 
 @interface MobileDeviceManager ()
 @property dispatch_semaphore_t asamSem;
+@property BOOL guidedAccessCallbackRequired;
 @end
 
 @implementation MobileDeviceManager
@@ -29,6 +30,7 @@ static NSString * const APP_CONFIG_CHANGED = @"react-native-mdm/managedAppConfig
 static NSString * const APP_LOCK_STATUS_CHANGED = @"react-native-mdm/appLockStatusDidChange";
 static NSString * const APP_LOCKED = @"appLocked";
 static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
+static char * const QUEUE_NAME = "com.robinpowered.RNMobileDeviceManager";
 
 - (instancetype)init
 {
@@ -36,6 +38,7 @@ static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
     [[ManagedAppConfigSettings clientInstance] start];
     if (self = [super init]) {
         self.asamSem = dispatch_semaphore_create(1);
+        self.guidedAccessCallbackRequired = YES;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(guidedAccessStatusChangeListenerCallback:) name:UIAccessibilityGuidedAccessStatusDidChangeNotification object:nil];
     }
     return self;
@@ -47,7 +50,8 @@ static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (void) settingsDidChange:(NSDictionary<NSString *, id> *) changes {
+- (void)settingsDidChange:(NSDictionary<NSString *, id> *)changes
+{
     id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
     [_bridge.eventDispatcher sendDeviceEventWithName:APP_CONFIG_CHANGED
                                                 body:appConfig];
@@ -55,31 +59,40 @@ static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
 
 - (void)guidedAccessStatusChangeListenerCallback:(NSNotification*)notification
 {
-    [self isSAMEnabled:^(BOOL isEnabled) {
-        [self isASAMSupported:^(BOOL isAllowed) {
-            [_bridge.eventDispatcher sendDeviceEventWithName:APP_LOCK_STATUS_CHANGED
-                                                        body:(@{
-                                                                APP_LOCKED: @(isEnabled),
-                                                                APP_LOCKING_ALLOWED: @(isAllowed)
-                                                                })];
-        }];
-    }];
-
+    dispatch_async(dispatch_queue_create(QUEUE_NAME, DISPATCH_QUEUE_SERIAL), ^{
+        if (self.guidedAccessCallbackRequired != NO) {
+            [self isSAMEnabled:^(BOOL isEnabled) {
+                dispatch_async(dispatch_queue_create(QUEUE_NAME, DISPATCH_QUEUE_SERIAL), ^{
+                    [self isASAMSupported:^(BOOL isAllowed) {
+                        [_bridge.eventDispatcher sendDeviceEventWithName:APP_LOCK_STATUS_CHANGED
+                                                                    body:(@{
+                                                                            APP_LOCKED: @(isEnabled),
+                                                                            APP_LOCKING_ALLOWED: @(isAllowed)
+                                                                            })];
+                    }];
+                });
+            }];
+        }
+    });
 }
 
-- (void) isASAMSupported:(void(^)(BOOL))callback {
+- (void) isASAMSupported:(void(^)(BOOL))callback
+{
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
-
+    
     dispatch_async(dispatch_get_main_queue(), ^{
+        self.guidedAccessCallbackRequired = NO;
         if (UIAccessibilityIsGuidedAccessEnabled()) {
             UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
                 if (didDisable) {
                     UIAccessibilityRequestGuidedAccessSession(YES, ^(BOOL didEnable) {
                         dispatch_semaphore_signal(self.asamSem);
+                        self.guidedAccessCallbackRequired = YES;
                         callback(didEnable);
                     });
                 } else {
                     dispatch_semaphore_signal(self.asamSem);
+                    self.guidedAccessCallbackRequired = YES;
                     callback(didDisable);
                 }
             });
@@ -88,10 +101,12 @@ static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
                 if (didEnable) {
                     UIAccessibilityRequestGuidedAccessSession(NO, ^(BOOL didDisable) {
                         dispatch_semaphore_signal(self.asamSem);
+                        self.guidedAccessCallbackRequired = YES;
                         callback(didDisable);
                     });
                 } else {
                     dispatch_semaphore_signal(self.asamSem);
+                    self.guidedAccessCallbackRequired = YES;
                     callback(didEnable);
                 }
             });
@@ -99,9 +114,9 @@ static NSString * const APP_LOCKING_ALLOWED = @"appLockingAllowed";
     });
 }
 
-- (void) isSAMEnabled:(void(^)(BOOL))callback {
+- (void) isSAMEnabled:(void(^)(BOOL))callback
+{
     dispatch_semaphore_wait(self.asamSem, DISPATCH_TIME_FOREVER);
-
     dispatch_async(dispatch_get_main_queue(), ^{
         BOOL isEnabled = UIAccessibilityIsGuidedAccessEnabled();
         dispatch_semaphore_signal(self.asamSem);
@@ -121,14 +136,14 @@ RCT_EXPORT_MODULE();
 
 - (dispatch_queue_t)methodQueue
 {
-    return dispatch_queue_create("com.robinpowered.RNMobileDeviceManager", DISPATCH_QUEUE_SERIAL);
+    return dispatch_queue_create(QUEUE_NAME, DISPATCH_QUEUE_SERIAL);
 }
 
 RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
-
+    
     if (appConfig) {
         resolve(@YES);
     } else {
@@ -140,7 +155,7 @@ RCT_EXPORT_METHOD(getConfiguration:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     id appConfig = [[ManagedAppConfigSettings clientInstance] appConfig];
-
+    
     if (appConfig) {
         resolve(appConfig);
     } else {
@@ -155,7 +170,7 @@ RCT_EXPORT_METHOD(isAppLockingAllowed: (RCTPromiseResolveBlock)resolve
     [self isASAMSupported:^(BOOL isSupported){
         resolve(@(isSupported));
     }];
-
+    
 }
 
 RCT_EXPORT_METHOD(isAppLocked: (RCTPromiseResolveBlock)resolve
