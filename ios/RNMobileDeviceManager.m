@@ -19,7 +19,6 @@
 
 @interface MobileDeviceManager ()
 @property dispatch_semaphore_t asamSem;
-@property dispatch_queue_t queue;
 @property dispatch_queue_t eventQueue;
 @property BOOL guidedAccessCallbackRequired;
 @property BOOL invalidated;
