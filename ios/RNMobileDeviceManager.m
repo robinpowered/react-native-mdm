@@ -45,7 +45,6 @@ static char * const NOTIFICATION_QUEUE_NAME = "com.robinpowered.RNMobileDeivceMa
         self.asamSem = dispatch_semaphore_create(1);
         self.guidedAccessCallbackRequired = YES;
         self.invalidated = NO;
-        self.queue = dispatch_queue_create(OPERATION_QUEUE_NAME, DISPATCH_QUEUE_SERIAL);
         self.eventQueue = dispatch_queue_create(NOTIFICATION_QUEUE_NAME, DISPATCH_QUEUE_SERIAL);
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(guidedAccessStatusChangeListenerCallback:) name:UIAccessibilityGuidedAccessStatusDidChangeNotification object:nil];
     }
