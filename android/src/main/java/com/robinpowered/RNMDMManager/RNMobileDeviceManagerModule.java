@@ -1,5 +1,6 @@
 package com.robinpowered.RNMDMManager;
 
+import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -7,6 +8,7 @@ import com.facebook.react.bridge.Promise;
 
 // For MDM
 import android.app.Activity;
+import android.app.admin.DeviceAdminReceiver;
 import android.content.RestrictionsManager;
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
@@ -22,13 +24,39 @@ import java.util.Map;
 import java.util.HashMap;
 import javax.annotation.Nullable;
 
-public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
+public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
     public static final String MODULE_NAME = "MobileDeviceManager";
+
     public static final String APP_CONFIG_CHANGED = "react-native-mdm/managedAppConfigDidChange";
+    public static final String APP_LOCK_STATUS_CHANGED = "react-native-mdm/appLockStatusDidChange";
+    public static final String APP_LOCKED = "appLocked";
+    public static final String APP_LOCKING_ALLOWED = "appLockingAllowed";
+
+    private BroadcastReceiver restrictionReceiver;
+    private BroadcastReceiver appLockReceiver;
 
     public RNMobileDeviceManagerModule(ReactApplicationContext reactContext) {
         super(reactContext);
-        final ReactApplicationContext thisContext = reactContext;
+    }
+
+    private void maybeUnregisterReceiver() {
+        if (restrictionReceiver == null && appLockReceiver == null) {
+            return;
+        }
+
+        getReactApplicationContext().unregisterReceiver(restrictionReceiver);
+        getReactApplicationContext().unregisterReceiver(appLockReceiver);
+
+        restrictionReceiver = null;
+        appLockReceiver = null;
+    }
+
+    private void maybeRegisterReceiver() {
+        final ReactApplicationContext reactContext = getReactApplicationContext();
+
+        if (restrictionReceiver != null && appLockReceiver != null) {
+            return;
+        }
 
         final RestrictionsManager restrictionsManager = (RestrictionsManager) reactContext.getSystemService(Context.RESTRICTIONS_SERVICE);
 
@@ -41,14 +69,34 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
                 for (String key : appRestrictions.keySet()){
                     data.putString(key, appRestrictions.getString(key));
                 }
-                if (thisContext.hasActiveCatalystInstance()) {
-                    thisContext
+                if (reactContext.hasActiveCatalystInstance()) {
+                    reactContext
                             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                             .emit(APP_CONFIG_CHANGED, data);
                 }
             }
         };
-        thisContext.registerReceiver(restrictionReceiver,restrictionFilter);
+        reactContext.registerReceiver(restrictionReceiver,restrictionFilter);
+
+        IntentFilter appLockFilter = new IntentFilter();
+        appLockFilter.addAction(DeviceAdminReceiver.ACTION_LOCK_TASK_ENTERING);
+        appLockFilter.addAction(DeviceAdminReceiver.ACTION_LOCK_TASK_EXITING);
+        BroadcastReceiver appLockReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                WritableNativeMap data = new WritableNativeMap();
+
+                data.putBoolean(APP_LOCKED, isLockState());
+                data.putBoolean(APP_LOCKING_ALLOWED, isLockStatePermitted());
+
+                if (reactContext.hasActiveCatalystInstance()) {
+                    reactContext
+                            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit(APP_LOCK_STATUS_CHANGED, data);
+                }
+            }
+        };
+        reactContext.registerReceiver(appLockReceiver, appLockFilter);
     }
 
     public boolean enableLockState() {
@@ -78,7 +126,14 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     public boolean isLockStatePermitted() {
         DevicePolicyManager dpm = (DevicePolicyManager)
                 getReactApplicationContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
-        return dpm.isLockTaskPermitted(getReactApplicationContext().getPackageName());
+        ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
+
+        boolean isPinned = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            isPinned = am.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_PINNED;
+        }
+
+        return dpm.isLockTaskPermitted(getReactApplicationContext().getPackageName()) && !isPinned;
     }
 
     public boolean isLockState() {
@@ -91,16 +146,6 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
         }
     }
 
-    public boolean isASAM() {
-        ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return am.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_LOCKED;
-        } else {
-            return isLockStatePermitted() && am.isInLockTaskMode();
-        }
-    }
-
     @Override
     public String getName() {
         return MODULE_NAME;
@@ -110,10 +155,16 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     public @Nullable Map<String, Object> getConstants() {
         HashMap<String, Object> constants = new HashMap<String, Object>();
         constants.put("APP_CONFIG_CHANGED", APP_CONFIG_CHANGED);
+        constants.put("APP_LOCK_STATUS_CHANGED", APP_LOCK_STATUS_CHANGED);
+        constants.put("APP_LOCKED", APP_LOCKED);
         return constants;
     }
 
     private boolean isMDMSupported() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return false;
+        }
+
         RestrictionsManager restrictionsManager = (RestrictionsManager) getReactApplicationContext().getSystemService(Context.RESTRICTIONS_SERVICE);
         return restrictionsManager.getApplicationRestrictions().size() > 0;
     }
@@ -139,12 +190,12 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void isAutonomousSingleAppModeSupported(final Promise promise) {
+    public void isAppLockingAllowed(final Promise promise) {
         promise.resolve(isLockStatePermitted());
     }
 
     @ReactMethod
-    public void isSingleAppModeEnabled(final Promise promise) {
+    public void isAppLocked(final Promise promise) {
         try {
           promise.resolve(isLockState());
         } catch (Exception e) {
@@ -153,29 +204,51 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void isAutonomousSingleAppModeEnabled(final Promise promise) {
+    public void lockApp(final Promise promise) {
         try {
-          promise.resolve(isASAM());
-        } catch (Exception e) {
-          promise.reject(e);
-        }
-    }
-
-    @ReactMethod
-    public void enableAutonomousSingleAppMode(final Promise promise) {
-        try {
-            promise.resolve(enableLockState());
+            boolean locked = enableLockState();
+            if (locked) {
+              promise.resolve(locked);
+            } else {
+              promise.reject(new Error("Unable to lock app"));
+            }
         } catch (Exception e) {
             promise.reject(e);
         }
     }
 
     @ReactMethod
-    public void disableAutonomousSingleAppMode(final Promise promise) {
+    public void unlockApp(final Promise promise) {
         try {
-            promise.resolve(disableLockState());
+            boolean unlocked = disableLockState();
+            if (unlocked) {
+              promise.resolve(unlocked);
+            } else {
+              promise.reject(new Error("Unable to unlock app"));
+            }
         } catch (Exception e) {
             promise.reject(e);
         }
+    }
+
+    @Override
+    public void initialize() {
+        getReactApplicationContext().addLifecycleEventListener(this);
+        maybeRegisterReceiver();
+    }
+
+    @Override
+    public void onHostResume() {
+        maybeRegisterReceiver();
+    }
+
+    @Override
+    public void onHostPause() {
+        maybeUnregisterReceiver();
+    }
+
+    @Override
+    public void onHostDestroy() {
+        maybeUnregisterReceiver();
     }
 }
