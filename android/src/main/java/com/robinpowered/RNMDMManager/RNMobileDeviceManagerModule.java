@@ -31,7 +31,6 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     public static final String APP_LOCKING_ALLOWED = "appLockingAllowed";
 
     private BroadcastReceiver restrictionReceiver;
-    private BroadcastReceiver appLockReceiver;
 
     public RNMobileDeviceManagerModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -50,7 +49,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     private void maybeRegisterReceiver() {
         final ReactApplicationContext reactContext = getReactApplicationContext();
 
-        if (restrictionReceiver != null && appLockReceiver != null) {
+        if (restrictionReceiver != null) {
             return;
         }
 
