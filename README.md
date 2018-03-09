@@ -36,6 +36,8 @@ componentWillUnmount() {
 
 ## Additional steps for Android
 
+Schema and extra settings needed for `AndroidManifest.xml` to obtain app configurations from MDM provider. [Android documentation regarding this](https://developer.android.com/work/managed-configurations.html)
+
 ```xml
 <meta-data android:name="android.content.APP_RESTRICTIONS"
   android:resource="@xml/app_restrictions" />
