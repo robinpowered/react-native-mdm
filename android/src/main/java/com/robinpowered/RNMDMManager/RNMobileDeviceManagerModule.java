@@ -8,10 +8,8 @@ import com.facebook.react.bridge.Promise;
 
 // For MDM
 import android.app.Activity;
-import android.app.admin.DeviceAdminReceiver;
 import android.content.RestrictionsManager;
 import android.app.ActivityManager;
-import android.app.admin.DevicePolicyManager;
 import android.os.Bundle;
 import android.os.Build;
 import android.content.Context;
@@ -102,16 +100,6 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     }
 
     public boolean isLockStatePermitted() {
-        // DevicePolicyManager dpm = (DevicePolicyManager)
-        //         getReactApplicationContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
-        // ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-
-        // boolean isPinned = false;
-        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        //     isPinned = am.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_PINNED;
-        // }
-
-        // return dpm.isLockTaskPermitted(getReactApplicationContext().getPackageName()) && !isPinned;
         return true;
     }
 
