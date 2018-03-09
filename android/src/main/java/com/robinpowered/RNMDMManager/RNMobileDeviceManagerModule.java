@@ -26,9 +26,6 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     public static final String MODULE_NAME = "MobileDeviceManager";
 
     public static final String APP_CONFIG_CHANGED = "react-native-mdm/managedAppConfigDidChange";
-    public static final String APP_LOCK_STATUS_CHANGED = "react-native-mdm/appLockStatusDidChange";
-    public static final String APP_LOCKED = "appLocked";
-    public static final String APP_LOCKING_ALLOWED = "appLockingAllowed";
 
     private BroadcastReceiver restrictionReceiver;
 
@@ -121,7 +118,6 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     public @Nullable Map<String, Object> getConstants() {
         HashMap<String, Object> constants = new HashMap<String, Object>();
         constants.put("APP_CONFIG_CHANGED", APP_CONFIG_CHANGED);
-        constants.put("APP_LOCKED", APP_LOCKED);
         return constants;
     }
 
