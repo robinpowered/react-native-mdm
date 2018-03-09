@@ -34,3 +34,23 @@ componentWillUnmount() {
 }
 ```
 
+## Additional steps for Android
+
+```xml
+<meta-data android:name="android.content.APP_RESTRICTIONS"
+  android:resource="@xml/app_restrictions" />
+```
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<restrictions xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <restriction
+    android:key="downloadOnCellular"
+    android:title="@string/download_on_cell_title"
+    android:restrictionType="bool"
+    android:description="@string/download_on_cell_description"
+    android:defaultValue="true" />
+
+</restrictions>
+```
