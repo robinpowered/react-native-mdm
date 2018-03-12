@@ -97,7 +97,10 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     }
 
     public boolean isLockStatePermitted() {
-        return true;
+        DevicePolicyManager dpm = (DevicePolicyManager)
+                getReactApplicationContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+
+        return dpm.isLockTaskPermitted(getReactApplicationContext().getPackageName());
     }
 
     public boolean isLockState() {
