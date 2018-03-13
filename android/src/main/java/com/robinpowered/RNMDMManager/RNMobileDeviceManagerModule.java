@@ -8,6 +8,7 @@ import com.facebook.react.bridge.Promise;
 
 // For MDM
 import android.app.Activity;
+import android.app.admin.DevicePolicyManager;
 import android.content.RestrictionsManager;
 import android.app.ActivityManager;
 import android.os.Bundle;
