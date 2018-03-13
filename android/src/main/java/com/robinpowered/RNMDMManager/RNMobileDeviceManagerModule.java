@@ -48,7 +48,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     private void maybeRegisterReceiver() {
         final ReactApplicationContext reactContext = getReactApplicationContext();
 
-        if (restrictionReceiver != null) {
+        if (restrictionReceiver != null || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             return;
         }
 
@@ -74,7 +74,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     }
 
     public boolean enableLockState() {
-        if (!isLockState()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && !isLockState()) {
             Activity activity = getCurrentActivity();
             if (activity == null) {
                 return false;
@@ -86,7 +86,7 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     }
 
     public boolean disableLockState() {
-        if (isLockState()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && isLockState()) {
             Activity activity = getCurrentActivity();
             if (activity == null) {
                 return false;
@@ -98,6 +98,11 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     }
 
     public boolean isLockStatePermitted() {
+        // lock state introduced in API 21 / Android 5.0 and up
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return false;
+        }
+
         DevicePolicyManager dpm = (DevicePolicyManager)
                 getReactApplicationContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
 
