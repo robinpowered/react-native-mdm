@@ -110,6 +110,11 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
     }
 
     public boolean isLockState() {
+        // lock state introduced in API 21 / Android 5.0 and up
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return false;
+        }
+
         ActivityManager am = (ActivityManager) getReactApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
