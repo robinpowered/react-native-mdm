@@ -150,7 +150,7 @@ RCT_EXPORT_MODULE();
 
 + (BOOL)requiresMainQueueSetup
 {
-    return YES;
+    return NO;
 }
 
 RCT_EXPORT_METHOD(isSupported: (RCTPromiseResolveBlock)resolve
