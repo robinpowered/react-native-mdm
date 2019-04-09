@@ -105,7 +105,7 @@
 				TargetAttributes = {
 					C91CCA6E1C691C0700E71355 = {
 						CreatedOnToolsVersion = 7.2.1;
-						LastSwiftMigration = 0830;
+						LastSwiftMigration = 1010;
 					};
 				};
 			};
@@ -254,7 +254,8 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0;
+				SWIFT_SWIFT3_OBJC_INFERENCE = On;
+				SWIFT_VERSION = 4.2;
 			};
 			name = Debug;
 		};
@@ -273,7 +274,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.appconfig.AppConfigSettingsFramework;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 3.0;
+				SWIFT_SWIFT3_OBJC_INFERENCE = On;
+				SWIFT_VERSION = 4.2;
 			};
 			name = Release;
 		};
