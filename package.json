@@ -14,6 +14,10 @@
   "devDependencies": {
     "react-native": "^0.27"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robinpowered/react-native-mdm.git"
+  },
   "peerDependencies": {
     "react-native": "^0.27"
   }
