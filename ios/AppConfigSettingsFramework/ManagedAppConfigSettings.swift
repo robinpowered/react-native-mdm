@@ -16,6 +16,7 @@ open class ManagedAppConfigSettings: NSObject {
 
     fileprivate static var token:Int = 0
     fileprivate static var manager:ManagedAppConfigSettings?
+    @objc
     open var delegate:ManagedAppConfigSettingsDelegate?
 
     // MARK: Public Methods
@@ -25,7 +26,8 @@ open class ManagedAppConfigSettings: NSObject {
 
      - returns: ManagedAppConfigSettings instance
      */
-    open static func clientInstance() -> ManagedAppConfigSettings
+    @objc
+    public static func clientInstance() -> ManagedAppConfigSettings
     {
         _ = ManagedAppConfigSettings.__once
         return manager!
@@ -35,6 +37,7 @@ open class ManagedAppConfigSettings: NSObject {
      Start the ManagedAppConfigSettings, including adding observers
      It is recommended to set the delegate before calling start()
      */
+    @objc
     open func start()
     {
         NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: OperationQueue.main) { (notification:Notification) -> Void in
@@ -48,9 +51,10 @@ open class ManagedAppConfigSettings: NSObject {
                 }
             }
         }
-        self.checkAppConfigChanges()
+        _ = self.checkAppConfigChanges()
     }
 
+    @objc
     open func end()
     {
         NotificationCenter.default.removeObserver(self, name: UserDefaults.didChangeNotification, object: nil);
@@ -61,6 +65,7 @@ open class ManagedAppConfigSettings: NSObject {
 
      - returns: dictionary of key/value pairs
      */
+    @objc
     open func appConfig ()  -> [String : Any]? {
         if let serverConfig = UserDefaults.standard.dictionary(forKey: kMDM_CONFIGURATION_KEY)
         {
