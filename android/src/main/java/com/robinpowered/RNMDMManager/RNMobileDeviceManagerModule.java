@@ -162,9 +162,9 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
             for (String key : appRestrictions.keySet()){
                 Object value = appRestrictions.get(key);
                 
-                if (value instanceof  Boolean) {
+                if (value instanceof Boolean) {
                     data.putBoolean(key, (Boolean) value);
-                } else if (value instanceof  Integer) {
+                } else if (value instanceof Integer) {
                     data.putInt(key, (Integer) value);
                 } else if (value instanceof String)  {
                     data.putString(key, (String) value);
