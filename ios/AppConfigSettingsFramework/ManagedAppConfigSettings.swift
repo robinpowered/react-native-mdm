@@ -25,7 +25,7 @@ open class ManagedAppConfigSettings: NSObject {
 
      - returns: ManagedAppConfigSettings instance
      */
-    open static func clientInstance() -> ManagedAppConfigSettings
+    public static func clientInstance() -> ManagedAppConfigSettings
     {
         _ = ManagedAppConfigSettings.__once
         return manager!
@@ -48,7 +48,7 @@ open class ManagedAppConfigSettings: NSObject {
                 }
             }
         }
-        self.checkAppConfigChanges()
+        _ = self.checkAppConfigChanges()
     }
 
     open func end()
