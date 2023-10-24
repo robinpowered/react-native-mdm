@@ -160,7 +160,17 @@ public class RNMobileDeviceManagerModule extends ReactContextBaseJavaModule impl
             Bundle appRestrictions = restrictionsManager.getApplicationRestrictions();
             WritableNativeMap data = new WritableNativeMap();
             for (String key : appRestrictions.keySet()){
-                data.putString(key, appRestrictions.getString(key));
+                Object value = appRestrictions.get(key);
+                
+                if (value instanceof Boolean) {
+                    data.putBoolean(key, (Boolean) value);
+                } else if (value instanceof Integer) {
+                    data.putInt(key, (Integer) value);
+                } else if (value instanceof String)  {
+                    data.putString(key, (String) value);
+                } else {
+                    data.putString(key, value.toString());
+                }
             }
             promise.resolve(data);
         } else {
