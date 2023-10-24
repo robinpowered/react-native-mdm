@@ -26,6 +26,7 @@ open class ManagedAppConfigSettings: NSObject {
 
      - returns: ManagedAppConfigSettings instance
      */
+  
     @objc
     public static func clientInstance() -> ManagedAppConfigSettings
     {

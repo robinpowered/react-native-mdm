@@ -1,6 +1,6 @@
 {
   "name": "react-native-mdm",
-  "version": "1.0.10",
+  "version": "2.0.1",
   "description": "A mobile device management (MDM) module for react-native",
   "main": "index.js",
   "scripts": {
@@ -12,13 +12,13 @@
   "author": "Ying Hang Eng",
   "license": "MIT",
   "devDependencies": {
-    "react-native": "^0.27"
+    "react-native": ">0.60"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/robinpowered/react-native-mdm.git"
   },
   "peerDependencies": {
-    "react-native": "^0.27"
+    "react-native": ">0.60"
   }
 }

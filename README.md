@@ -1,5 +1,10 @@
 
-# react-native-mdm
+# Install react-native-mdm
+```
+npm install react-native-mdm
+```
+
+# Setup
 
 ```javascript
 import MobileDeviceManager from 'react-native-mdm';
