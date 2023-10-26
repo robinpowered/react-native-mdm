@@ -130,6 +130,7 @@ DerivedData
 *.ipa
 *.xcuserstate
 project.xcworkspace
+ios/build
 
 ################
 # JetBrains
