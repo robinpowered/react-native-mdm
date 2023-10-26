@@ -1,6 +1,6 @@
 {
   "name": "react-native-mdm",
-  "version": "2.0.1",
+  "version": "2.2.0",
   "description": "A mobile device management (MDM) module for react-native",
   "main": "index.js",
   "scripts": {

@@ -15,4 +15,4 @@ FOUNDATION_EXPORT double AppConfigSettingsFrameworkVersionNumber;
 FOUNDATION_EXPORT const unsigned char AppConfigSettingsFrameworkVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <AppConfigSettingsFramework/PublicHeader.h>
-#import "ManagedAppConfigKeys.h"
+#import <AppConfigSettingsFramework/ManagedAppConfigKeys.h>
